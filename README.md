@@ -17,10 +17,16 @@
 ```bash
 make build  # собрать бинарь
 
-# послать GET запрос сервису
+# послать GET запрос сервису LOMS
 curl -i localhost:8081/createOrder -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}'
 curl -i localhost:8081/listOrder -d '{"orderID": 42}'
 curl -i localhost:8081/orderPayed -d '{"orderID": 42}'
 curl -i localhost:8081/cancelOrder -d '{"orderID": 42}'
 curl -i localhost:8081/stocks -d '{"sku": 12}'
+
+# послать GET запрос сервису Checkout
+curl -i localhost:8080/addToCart -d '{"user": 1, "sku": 12, "count": 23}'
+curl -i localhost:8080/deleteFromCart -d '{"user": 1, "sku": 12, "count": 23}'
+curl -i localhost:8080/listCart -d '{"user": 1}'
+curl -i localhost:8080/purchase -d '{"user": 1}'
 ```
