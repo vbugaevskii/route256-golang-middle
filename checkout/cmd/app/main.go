@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 	"net/http"
-	"route256/checkout/handlers/addtocart"
-	"route256/checkout/handlers/deletefromcart"
-	"route256/checkout/handlers/listcart"
-	"route256/checkout/handlers/purchase"
+	"route256/checkout/internal/handlers/addtocart"
+	"route256/checkout/internal/handlers/deletefromcart"
+	"route256/checkout/internal/handlers/listcart"
+	"route256/checkout/internal/handlers/purchase"
 	"route256/libs/srvwrapper"
 )
 
