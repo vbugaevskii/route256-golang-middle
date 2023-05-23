@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+const Endpoint = "/listOrder"
+
 type Handler struct {
 }
 

@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+const Endpoint = "/cancelOrder"
+
 type Handler struct {
 }
 

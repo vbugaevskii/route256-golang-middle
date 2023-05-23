@@ -15,19 +15,19 @@ const port = ":8081"
 
 func main() {
 	handCreateOrder := createorder.Handler{}
-	http.Handle("/createOrder", srvwrapper.New(handCreateOrder.Handle))
+	http.Handle(createorder.Endpoint, srvwrapper.New(handCreateOrder.Handle))
 
 	handListOrder := &listorder.Handler{}
-	http.Handle("/listOrder", srvwrapper.New(handListOrder.Handle))
+	http.Handle(listorder.Endpoint, srvwrapper.New(handListOrder.Handle))
 
 	handOrderPayed := orderpayed.Handler{}
-	http.Handle("/orderPayed", srvwrapper.New(handOrderPayed.Handle))
+	http.Handle(orderpayed.Endpoint, srvwrapper.New(handOrderPayed.Handle))
 
 	handCancelOrder := cancelorder.Handler{}
-	http.Handle("/cancelOrder", srvwrapper.New(handCancelOrder.Handle))
+	http.Handle(cancelorder.Endpoint, srvwrapper.New(handCancelOrder.Handle))
 
 	handStocks := stocks.Handler{}
-	http.Handle("/stocks", srvwrapper.New(handStocks.Handle))
+	http.Handle(stocks.Endpoint, srvwrapper.New(handStocks.Handle))
 
 	err := http.ListenAndServe(port, nil)
 	if err != nil {

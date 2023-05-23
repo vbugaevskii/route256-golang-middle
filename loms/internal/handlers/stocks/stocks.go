@@ -5,6 +5,8 @@ import (
 	"log"
 )
 
+const Endpoint = "/stocks"
+
 type Handler struct {
 }
 
