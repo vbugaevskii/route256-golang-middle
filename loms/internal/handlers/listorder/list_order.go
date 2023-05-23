@@ -45,6 +45,8 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, ErrOrderNotFound
 	}
 
+	// TODO: add communication with product-service
+
 	return Response{
 		Status: New,
 		User:   42,
