@@ -36,6 +36,8 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, ErrUserNotFound
 	}
 
+	// TODO: add communication with ProductService
+
 	return Response{
 		Items: []CartItem{
 			{
