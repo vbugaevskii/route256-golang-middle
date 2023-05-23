@@ -19,9 +19,9 @@ type Response struct {
 }
 
 var (
-	ErrUserNotFound     = errors.New("user not found")
-	ErrProductNotFound  = errors.New("product not found")
-	ErrProductNotEnough = errors.New("not enough products")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrProductNotFound     = errors.New("product not found")
+	ErrProductInsufficient = errors.New("product insufficient")
 )
 
 func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {

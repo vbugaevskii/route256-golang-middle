@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"route256/checkout/internal/domain"
 	"route256/checkout/internal/handlers/addtocart"
 	"route256/checkout/internal/handlers/deletefromcart"
 	"route256/checkout/internal/handlers/listcart"
@@ -13,7 +14,11 @@ import (
 const port = ":8080"
 
 func main() {
-	handAddToCart := addtocart.Handler{}
+	model := domain.New("http://localhost:8081")
+
+	handAddToCart := addtocart.Handler{
+		Model: model,
+	}
 	http.Handle("/addToCart", srvwrapper.New(handAddToCart.Handle))
 
 	handDeleteFromCart := deletefromcart.Handler{}
