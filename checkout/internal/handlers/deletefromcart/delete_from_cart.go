@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+const Endpoint = "/deleteFromCart"
+
 type Handler struct {
 }
 

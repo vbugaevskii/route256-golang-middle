@@ -19,16 +19,16 @@ func main() {
 	handAddToCart := addtocart.Handler{
 		Model: model,
 	}
-	http.Handle("/addToCart", srvwrapper.New(handAddToCart.Handle))
+	http.Handle(addtocart.Endpoint, srvwrapper.New(handAddToCart.Handle))
 
 	handDeleteFromCart := deletefromcart.Handler{}
-	http.Handle("/deleteFromCart", srvwrapper.New(handDeleteFromCart.Handle))
+	http.Handle(deletefromcart.Endpoint, srvwrapper.New(handDeleteFromCart.Handle))
 
 	handListCart := listcart.Handler{}
-	http.Handle("/listCart", srvwrapper.New(handListCart.Handle))
+	http.Handle(listcart.Endpoint, srvwrapper.New(handListCart.Handle))
 
 	handPurchase := purchase.Handler{}
-	http.Handle("/purchase", srvwrapper.New(handPurchase.Handle))
+	http.Handle(purchase.Endpoint, srvwrapper.New(handPurchase.Handle))
 
 	err := http.ListenAndServe(port, nil)
 	if err != nil {

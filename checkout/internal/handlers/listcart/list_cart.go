@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+const Endpoint = "/listCart"
+
 type Handler struct {
 }
 
