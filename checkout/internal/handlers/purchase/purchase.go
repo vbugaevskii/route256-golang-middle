@@ -37,10 +37,10 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 
 	handListCart := listcart.Handler{}
 	cart, err := handListCart.Handle(ctx, listcart.Request{User: req.User})
+	log.Printf("Checkout.listcart: %+v", cart)
 	if err != nil {
 		return Response{}, err
 	}
-	log.Printf("Checkout.listcart: %+v", cart)
 
 	items := make([]client.CreateOrderItem, 0, len(cart.Items))
 	for _, item := range cart.Items {
