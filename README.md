@@ -11,3 +11,16 @@
 - Наладить общение с product-service (в хендлере Checkout.listCart). Токен для общения с product-service получить, написав в личку @badger_za
 
 *Дедлайн: 27 мая, 23:59 (сдача) / 30 мая, 23:59 (проверка)*
+
+# Полезные команды
+
+```bash
+make build  # собрать бинарь
+
+# послать GET запрос сервису
+curl -i localhost:8081/createOrder -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}'
+curl -i localhost:8081/listOrder -d '{"orderID": 42}'
+curl -i localhost:8081/orderPayed -d '{"orderID": 42}'
+curl -i localhost:8081/cancelOrder -d '{"orderID": 42}'
+curl -i localhost:8081/stocks -d '{"sku": 12}'
+```
