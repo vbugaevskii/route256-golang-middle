@@ -27,7 +27,9 @@ func main() {
 	handListCart := listcart.Handler{}
 	http.Handle(listcart.Endpoint, srvwrapper.New(handListCart.Handle))
 
-	handPurchase := purchase.Handler{}
+	handPurchase := purchase.Handler{
+		Model: model,
+	}
 	http.Handle(purchase.Endpoint, srvwrapper.New(handPurchase.Handle))
 
 	err := http.ListenAndServe(port, nil)

@@ -1,9 +1,13 @@
 package createorder
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
 )
 
 const Endpoint = "/createOrder"
@@ -19,6 +23,20 @@ type OrderItem struct {
 type Request struct {
 	User  int64       `json:"user"`
 	Items []OrderItem `json:"items"`
+}
+
+func (r *Request) Prepare(ctx context.Context, netloc string) (*http.Request, error) {
+	reqBytes, err := json.Marshal(&r)
+	if err != nil {
+		return nil, fmt.Errorf("encode request: %w", err)
+	}
+
+	reqHttp, err := http.NewRequestWithContext(ctx, http.MethodPost, netloc+Endpoint, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return nil, fmt.Errorf("prepare request: %w", err)
+	}
+
+	return reqHttp, nil
 }
 
 type Response struct {
