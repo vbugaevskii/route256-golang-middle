@@ -28,16 +28,16 @@ type ResponseListSkus struct {
 	SKUList []uint32 `json:"skus"`
 }
 
-type ProductServiceClient struct {
+type ProductService struct {
 	Token string
 
 	GetProductHandler *cliwrapper.Wrapper[*RequestGetProduct, ResponseGetProduct]
 	ListSkusHandler   *cliwrapper.Wrapper[*RequestListSkus, ResponseListSkus]
 }
 
-func NewProductService(cfg config.ConfigService) *ProductServiceClient {
+func NewProductService(cfg config.ConfigService) *ProductService {
 	netloc := cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
-	return &ProductServiceClient{
+	return &ProductService{
 		Token: cfg.Token,
 		GetProductHandler: cliwrapper.New[*RequestGetProduct, ResponseGetProduct](
 			netloc,
@@ -52,7 +52,12 @@ func NewProductService(cfg config.ConfigService) *ProductServiceClient {
 	}
 }
 
-func (cli *ProductServiceClient) GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error) {
+type ProductServiceClient interface {
+	GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error)
+	ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error)
+}
+
+func (cli *ProductService) GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error) {
 	req := RequestGetProduct{
 		Token: cli.Token,
 		SKU:   sku,
@@ -60,7 +65,7 @@ func (cli *ProductServiceClient) GetProduct(ctx context.Context, sku uint32) (Re
 	return cli.GetProductHandler.Retrieve(ctx, &req)
 }
 
-func (cli *ProductServiceClient) ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error) {
+func (cli *ProductService) ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error) {
 	req := RequestListSkus{
 		Token:         cli.Token,
 		StartAfterSku: startAfterSku,

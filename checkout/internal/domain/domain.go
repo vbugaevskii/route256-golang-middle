@@ -6,10 +6,10 @@ import (
 
 type Model struct {
 	Loms           cliLoms.Client
-	ProductService *ProductServiceClient
+	ProductService ProductServiceClient
 }
 
-func New(loms *LomsClient, productService *ProductServiceClient) *Model {
+func New(loms *LomsClient, productService *ProductService) *Model {
 	return &Model{
 		Loms:           loms,
 		ProductService: productService,
