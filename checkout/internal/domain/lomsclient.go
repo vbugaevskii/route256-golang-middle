@@ -3,8 +3,10 @@ package domain
 import (
 	"context"
 	"net/http"
+	"route256/checkout/internal/config"
 	"route256/libs/cliwrapper"
 	"route256/loms/external/client"
+	"strconv"
 )
 
 type LomsClient struct {
@@ -12,7 +14,8 @@ type LomsClient struct {
 	CreateOrderHandler *cliwrapper.Wrapper[*client.RequestCreateOrder, client.ResponseCreateOrder]
 }
 
-func NewLomsClient(netloc string) *LomsClient {
+func NewLomsClient(config config.ConfigService) *LomsClient {
+	netloc := config.Host + ":" + strconv.Itoa(int(config.Port))
 	return &LomsClient{
 		StocksHandler: cliwrapper.New[*client.RequestStocks, client.ResponseStocks](
 			netloc,
