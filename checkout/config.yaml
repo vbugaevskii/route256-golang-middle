@@ -1,0 +1,6 @@
+port: 8080
+
+services:
+  loms:
+    host: "http://localhost"
+    port: 8081
