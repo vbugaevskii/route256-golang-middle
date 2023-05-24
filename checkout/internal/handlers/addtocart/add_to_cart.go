@@ -7,8 +7,6 @@ import (
 	"route256/checkout/internal/domain"
 )
 
-const Endpoint = "/addToCart"
-
 type Handler struct {
 	Model *domain.Model
 }

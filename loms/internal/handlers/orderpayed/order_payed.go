@@ -6,8 +6,6 @@ import (
 	"log"
 )
 
-const Endpoint = "/orderPayed"
-
 type Handler struct {
 }
 

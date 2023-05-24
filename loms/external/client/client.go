@@ -2,47 +2,34 @@ package client
 
 import (
 	"context"
-	"route256/libs/cliwrapper"
-	"route256/loms/internal/handlers/createorder"
-	"route256/loms/internal/handlers/stocks"
 )
 
-type Client struct {
-	StocksHandler      *cliwrapper.Wrapper[*stocks.Request, stocks.Response]
-	CreateOrderHandler *cliwrapper.Wrapper[*createorder.Request, createorder.Response]
+type RequestStocks struct {
+	SKU uint32 `json:"sku"`
 }
 
-func New(netloc string) *Client {
-	return &Client{
-		StocksHandler:      cliwrapper.New[*stocks.Request, stocks.Response](netloc),
-		CreateOrderHandler: cliwrapper.New[*createorder.Request, createorder.Response](netloc),
-	}
+type ResponseStocks struct {
+	Stocks []struct {
+		WarehouseID int64  `json:"warehouseID"`
+		Count       uint64 `json:"count"`
+	} `json:"stocks"`
 }
 
-func (c *Client) Stocks(ctx context.Context, sku uint32) (stocks.Response, error) {
-	req := stocks.Request{
-		SKU: sku,
-	}
-	return c.StocksHandler.Retrieve(ctx, &req)
-}
-
-type CreateOrderItem struct {
+type RequestCreateOrderItem struct {
 	SKU   uint32 `json:"sku"`
 	Count uint64 `json:"count"`
 }
 
-func (c *Client) CreateOrder(ctx context.Context, user int64, items []CreateOrderItem) (createorder.Response, error) {
-	itemsCast := make([]createorder.OrderItem, 0, len(items))
-	for _, v := range items {
-		itemsCast = append(itemsCast, createorder.OrderItem{
-			SKU:   v.SKU,
-			Count: v.Count,
-		})
-	}
+type RequestCreateOrder struct {
+	User  int64                    `json:"user"`
+	Items []RequestCreateOrderItem `json:"items"`
+}
 
-	req := createorder.Request{
-		User:  user,
-		Items: itemsCast,
-	}
-	return c.CreateOrderHandler.Retrieve(ctx, &req)
+type ResponseCreateOrder struct {
+	OrderId int64 `json:"orderID"`
+}
+
+type Client interface {
+	Stocks(ctx context.Context, sku uint32) (ResponseStocks, error)
+	CreateOrder(ctx context.Context, user int64, items []RequestCreateOrderItem) (ResponseCreateOrder, error)
 }

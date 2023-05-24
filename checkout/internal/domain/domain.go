@@ -5,11 +5,11 @@ import (
 )
 
 type Model struct {
-	Loms *cliLoms.Client
+	Loms cliLoms.Client
 }
 
-func New(netlocLoms string) *Model {
+func New(loms *LomsClient) *Model {
 	return &Model{
-		Loms: cliLoms.New(netlocLoms),
+		Loms: loms,
 	}
 }

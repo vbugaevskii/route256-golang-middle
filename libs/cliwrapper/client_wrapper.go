@@ -1,32 +1,38 @@
 package cliwrapper
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 )
 
-type RequestPreparer interface {
-	Prepare(ctx context.Context, netloc string) (*http.Request, error)
+type Wrapper[Request any, Response any] struct {
+	netloc   string
+	endpoint string
+	method   string
 }
 
-type Wrapper[Request RequestPreparer, Response any] struct {
-	netloc string
-}
-
-func New[Request RequestPreparer, Response any](netloc string) *Wrapper[Request, Response] {
+func New[Request any, Response any](netloc string, endpoint string, method string) *Wrapper[Request, Response] {
 	return &Wrapper[Request, Response]{
-		netloc: netloc,
+		netloc:   netloc,
+		endpoint: endpoint,
+		method:   method,
 	}
 }
 
 func (w *Wrapper[Request, Response]) Retrieve(ctx context.Context, req Request) (Response, error) {
 	var res Response
 
-	reqHttp, err := req.Prepare(ctx, w.netloc)
+	reqBytes, err := json.Marshal(&req)
 	if err != nil {
-		return res, err
+		return res, fmt.Errorf("encode request: %w", err)
+	}
+
+	reqHttp, err := http.NewRequestWithContext(ctx, w.method, w.netloc+w.endpoint, bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return res, fmt.Errorf("prepare request: %w", err)
 	}
 
 	resHttp, err := http.DefaultClient.Do(reqHttp)

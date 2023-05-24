@@ -9,8 +9,6 @@ import (
 	"route256/loms/external/client"
 )
 
-const Endpoint = "/purchase"
-
 type Handler struct {
 	Model *domain.Model
 }
@@ -42,9 +40,9 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, err
 	}
 
-	items := make([]client.CreateOrderItem, 0, len(cart.Items))
+	items := make([]client.RequestCreateOrderItem, 0, len(cart.Items))
 	for _, item := range cart.Items {
-		items = append(items, client.CreateOrderItem{
+		items = append(items, client.RequestCreateOrderItem{
 			SKU:   item.SKU,
 			Count: uint64(item.Count),
 		})
