@@ -2,20 +2,20 @@ package client
 
 import (
 	"context"
-	"route256/libs/cliwarpper"
+	"route256/libs/cliwrapper"
 	"route256/loms/internal/handlers/createorder"
 	"route256/loms/internal/handlers/stocks"
 )
 
 type Client struct {
-	StocksHandler      *cliwarpper.Wrapper[*stocks.Request, stocks.Response]
-	CreateOrderHandler *cliwarpper.Wrapper[*createorder.Request, createorder.Response]
+	StocksHandler      *cliwrapper.Wrapper[*stocks.Request, stocks.Response]
+	CreateOrderHandler *cliwrapper.Wrapper[*createorder.Request, createorder.Response]
 }
 
 func New(netloc string) *Client {
 	return &Client{
-		StocksHandler:      cliwarpper.New[*stocks.Request, stocks.Response](netloc),
-		CreateOrderHandler: cliwarpper.New[*createorder.Request, createorder.Response](netloc),
+		StocksHandler:      cliwrapper.New[*stocks.Request, stocks.Response](netloc),
+		CreateOrderHandler: cliwrapper.New[*createorder.Request, createorder.Response](netloc),
 	}
 }
 

@@ -1,4 +1,4 @@
-package cliwarpper
+package cliwrapper
 
 import (
 	"context"
