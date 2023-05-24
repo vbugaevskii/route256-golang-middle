@@ -4,3 +4,8 @@ services:
   loms:
     host: "http://localhost"
     port: 8081
+
+  product_service:
+    host: "http://route256.pavl.uk"
+    port: 8080
+    token: "testtoken"

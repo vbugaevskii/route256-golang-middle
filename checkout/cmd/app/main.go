@@ -21,6 +21,7 @@ func main() {
 
 	model := domain.New(
 		domain.NewLomsClient(config.AppConfig.Services.Loms),
+		domain.NewProductService(config.AppConfig.Services.ProductService),
 	)
 
 	handAddToCart := addtocart.Handler{
@@ -31,7 +32,9 @@ func main() {
 	handDeleteFromCart := deletefromcart.Handler{}
 	http.Handle("/deleteFromCart", srvwrapper.New(handDeleteFromCart.Handle))
 
-	handListCart := listcart.Handler{}
+	handListCart := listcart.Handler{
+		Model: model,
+	}
 	http.Handle("/listCart", srvwrapper.New(handListCart.Handle))
 
 	handPurchase := purchase.Handler{

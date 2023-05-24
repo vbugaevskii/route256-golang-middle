@@ -33,7 +33,9 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, ErrUserNotFound
 	}
 
-	handListCart := listcart.Handler{}
+	handListCart := listcart.Handler{
+		Model: h.Model,
+	}
 	cart, err := handListCart.Handle(ctx, listcart.Request{User: req.User})
 	log.Printf("Checkout.listcart: %+v", cart)
 	if err != nil {

@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"log"
+	"route256/checkout/internal/domain"
 )
 
 type Handler struct {
+	Model *domain.Model
 }
 
 type Request struct {
@@ -30,13 +32,17 @@ var (
 )
 
 func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
-	log.Printf("%+v", req)
+	log.Printf("%+v\n", req)
 
 	if req.User == 0 {
 		return Response{}, ErrUserNotFound
 	}
 
-	// TODO: add communication with ProductService
+	product, err := h.Model.ProductService.GetProduct(ctx, 773297411)
+	log.Printf("ProductService.GetProduct: %+v\n", product)
+	if err != nil {
+		return Response{}, err
+	}
 
 	return Response{
 		Items: []CartItem{

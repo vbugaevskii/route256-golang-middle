@@ -14,8 +14,8 @@ type LomsClient struct {
 	CreateOrderHandler *cliwrapper.Wrapper[*client.RequestCreateOrder, client.ResponseCreateOrder]
 }
 
-func NewLomsClient(config config.ConfigService) *LomsClient {
-	netloc := config.Host + ":" + strconv.Itoa(int(config.Port))
+func NewLomsClient(cfg config.ConfigService) *LomsClient {
+	netloc := cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
 	return &LomsClient{
 		StocksHandler: cliwrapper.New[*client.RequestStocks, client.ResponseStocks](
 			netloc,

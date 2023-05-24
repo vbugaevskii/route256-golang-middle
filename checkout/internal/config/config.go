@@ -8,15 +8,17 @@ import (
 )
 
 type ConfigService struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
+	Host  string `yaml:"host"`
+	Port  int    `yaml:"port"`
+	Token string `yaml:"token"`
 }
 
 type Config struct {
 	Port int `yaml:"port"`
 
 	Services struct {
-		Loms ConfigService `yaml:"loms"`
+		Loms           ConfigService `yaml:"loms"`
+		ProductService ConfigService `yaml:"product_service"`
 	} `yaml:"services"`
 }
 
