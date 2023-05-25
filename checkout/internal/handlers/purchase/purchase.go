@@ -6,7 +6,8 @@ import (
 	"log"
 	"route256/checkout/internal/domain"
 	"route256/checkout/internal/handlers/listcart"
-	"route256/loms/external/client"
+
+	cliloms "route256/checkout/internal/clients/loms"
 )
 
 type Handler struct {
@@ -42,9 +43,9 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, err
 	}
 
-	items := make([]client.RequestCreateOrderItem, 0, len(cart.Items))
+	items := make([]cliloms.RequestCreateOrderItem, 0, len(cart.Items))
 	for _, item := range cart.Items {
-		items = append(items, client.RequestCreateOrderItem{
+		items = append(items, cliloms.RequestCreateOrderItem{
 			SKU:   item.SKU,
 			Count: uint64(item.Count),
 		})
