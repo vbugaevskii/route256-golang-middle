@@ -50,11 +50,6 @@ func NewProduct(cfg config.ConfigService) *ProductService {
 	}
 }
 
-type ProductClient interface {
-	GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error)
-	ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error)
-}
-
 func (cli *ProductService) GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error) {
 	req := RequestGetProduct{
 		Token: cli.Token,
