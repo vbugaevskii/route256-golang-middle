@@ -38,6 +38,8 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, ErrUserNotFound
 	}
 
+	// TODO: There should be a call to DB
+
 	product, err := h.Model.Product.GetProduct(ctx, 773297411)
 	log.Printf("Product.GetProduct: %+v\n", product)
 	if err != nil {
@@ -47,12 +49,12 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 	return Response{
 		Items: []CartItem{
 			{
-				SKU:   12,
+				SKU:   773297411,
 				Count: 2,
-				Name:  "Молоко Домик в деревне",
-				Price: 8500,
+				Name:  product.Name,
+				Price: product.Price,
 			},
 		},
-		TotalPrice: 17000,
+		TotalPrice: 2 * product.Price,
 	}, nil
 }
