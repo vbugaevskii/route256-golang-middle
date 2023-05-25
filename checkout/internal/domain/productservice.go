@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"route256/checkout/internal/config"
 	"route256/libs/cliwrapper"
-	"strconv"
 )
 
 type RequestGetProduct struct {
@@ -36,16 +35,15 @@ type ProductService struct {
 }
 
 func NewProductService(cfg config.ConfigService) *ProductService {
-	netloc := cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
 	return &ProductService{
 		Token: cfg.Token,
 		GetProductHandler: cliwrapper.New[*RequestGetProduct, ResponseGetProduct](
-			netloc,
+			cfg.Netloc,
 			"/get_product",
 			http.MethodPost,
 		),
 		ListSkusHandler: cliwrapper.New[*RequestListSkus, ResponseListSkus](
-			netloc,
+			cfg.Netloc,
 			"/list_skus",
 			http.MethodPost,
 		),

@@ -8,9 +8,8 @@ import (
 )
 
 type ConfigService struct {
-	Host  string `yaml:"host"`
-	Port  int    `yaml:"port"`
-	Token string `yaml:"token"`
+	Netloc string `yaml:"netloc"`
+	Token  string `yaml:"token"`
 }
 
 type Config struct {

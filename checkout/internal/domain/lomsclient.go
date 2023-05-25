@@ -6,7 +6,6 @@ import (
 	"route256/checkout/internal/config"
 	"route256/libs/cliwrapper"
 	"route256/loms/external/client"
-	"strconv"
 )
 
 type LomsClient struct {
@@ -15,15 +14,14 @@ type LomsClient struct {
 }
 
 func NewLomsClient(cfg config.ConfigService) *LomsClient {
-	netloc := cfg.Host + ":" + strconv.Itoa(int(cfg.Port))
 	return &LomsClient{
 		StocksHandler: cliwrapper.New[*client.RequestStocks, client.ResponseStocks](
-			netloc,
+			cfg.Netloc,
 			"/stocks",
 			http.MethodPost,
 		),
 		CreateOrderHandler: cliwrapper.New[*client.RequestCreateOrder, client.ResponseCreateOrder](
-			netloc,
+			cfg.Netloc,
 			"/createOrder",
 			http.MethodPost,
 		),

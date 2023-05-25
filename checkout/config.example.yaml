@@ -2,10 +2,8 @@ port: 8080
 
 services:
   loms:
-    host: "http://localhost"
-    port: 8081
+    netloc: "http://localhost:8081"
 
   product_service:
-    host: "http://route256.pavl.uk"
-    port: 8080
+    netloc: "http://route256.pavl.uk:8080"
     token: "testtoken"
