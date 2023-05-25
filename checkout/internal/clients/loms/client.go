@@ -32,11 +32,6 @@ type ResponseCreateOrder struct {
 	OrderId int64 `json:"orderID"`
 }
 
-type LomsClient interface {
-	Stocks(ctx context.Context, sku uint32) (ResponseStocks, error)
-	CreateOrder(ctx context.Context, user int64, items []RequestCreateOrderItem) (ResponseCreateOrder, error)
-}
-
 type LomsService struct {
 	StocksHandler      *cliwrapper.Wrapper[*RequestStocks, ResponseStocks]
 	CreateOrderHandler *cliwrapper.Wrapper[*RequestCreateOrder, ResponseCreateOrder]
