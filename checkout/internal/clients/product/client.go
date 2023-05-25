@@ -1,4 +1,4 @@
-package productservice
+package product
 
 import (
 	"context"
