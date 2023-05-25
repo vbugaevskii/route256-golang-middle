@@ -34,7 +34,7 @@ type ProductService struct {
 	ListSkusHandler   *cliwrapper.Wrapper[*RequestListSkus, ResponseListSkus]
 }
 
-func NewProductService(cfg config.ConfigService) *ProductService {
+func NewProduct(cfg config.ConfigService) *ProductService {
 	return &ProductService{
 		Token: cfg.Token,
 		GetProductHandler: cliwrapper.New[*RequestGetProduct, ResponseGetProduct](
@@ -50,7 +50,7 @@ func NewProductService(cfg config.ConfigService) *ProductService {
 	}
 }
 
-type ProductServiceClient interface {
+type ProductClient interface {
 	GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error)
 	ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error)
 }

@@ -2,17 +2,17 @@ package domain
 
 import (
 	cliloms "route256/checkout/internal/clients/loms"
-	clips "route256/checkout/internal/clients/productservice"
+	clips "route256/checkout/internal/clients/product"
 )
 
 type Model struct {
-	Loms           cliloms.LomsClient
-	ProductService clips.ProductServiceClient
+	Loms    cliloms.LomsClient
+	Product clips.ProductClient
 }
 
 func New(loms *cliloms.LomsService, productService *clips.ProductService) *Model {
 	return &Model{
-		Loms:           loms,
-		ProductService: productService,
+		Loms:    loms,
+		Product: productService,
 	}
 }

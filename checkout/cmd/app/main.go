@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	cliloms "route256/checkout/internal/clients/loms"
-	clips "route256/checkout/internal/clients/productservice"
+	clips "route256/checkout/internal/clients/product"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 
 	model := domain.New(
 		cliloms.NewLomsClient(config.AppConfig.Services.Loms),
-		clips.NewProductService(config.AppConfig.Services.ProductService),
+		clips.NewProduct(config.AppConfig.Services.ProductService),
 	)
 
 	handAddToCart := addtocart.Handler{

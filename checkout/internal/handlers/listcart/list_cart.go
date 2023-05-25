@@ -38,8 +38,8 @@ func (h *Handler) Handle(ctx context.Context, req Request) (Response, error) {
 		return Response{}, ErrUserNotFound
 	}
 
-	product, err := h.Model.ProductService.GetProduct(ctx, 773297411)
-	log.Printf("ProductService.GetProduct: %+v\n", product)
+	product, err := h.Model.Product.GetProduct(ctx, 773297411)
+	log.Printf("Product.GetProduct: %+v\n", product)
 	if err != nil {
 		return Response{}, err
 	}
