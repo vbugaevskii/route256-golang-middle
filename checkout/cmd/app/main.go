@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"net/http"
+	cliloms "route256/checkout/internal/clients/loms"
+	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
 	"route256/checkout/internal/handlers/addtocart"
@@ -11,9 +13,6 @@ import (
 	"route256/checkout/internal/handlers/purchase"
 	"route256/libs/srvwrapper"
 	"strconv"
-
-	cliloms "route256/checkout/internal/clients/loms"
-	cliproduct "route256/checkout/internal/clients/product"
 )
 
 func main() {
