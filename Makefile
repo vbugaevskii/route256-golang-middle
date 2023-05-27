@@ -4,8 +4,8 @@ build-all:
 	cd notifications && GOOS=linux GOARCH=amd64 make build
 
 run-all: build-all
-	sudo docker compose up --force-recreate --build
-	#docker-compose up --force-recreate --build
+	# sudo docker compose up --force-recreate --build
+	docker-compose up --force-recreate --build
 
 precommit:
 	cd checkout && make precommit
