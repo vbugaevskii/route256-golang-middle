@@ -35,10 +35,10 @@ var (
 )
 
 type CartItem struct {
-	SKU   uint32 `json:"sku"`
-	Count uint16 `json:"count"`
-	Name  string `json:"name"`
-	Price uint32 `json:"uint32"`
+	SKU   uint32
+	Count uint16
+	Name  string
+	Price uint32
 }
 
 func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
