@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"errors"
 	"log"
 	cliloms "route256/checkout/internal/clients/loms"
 	cliproduct "route256/checkout/internal/clients/product"
@@ -22,12 +23,16 @@ type Model struct {
 	Product ProductClient
 }
 
-func New(loms LomsClient, productService ProductClient) *Model {
+func New(loms LomsClient, product ProductClient) *Model {
 	return &Model{
 		Loms:    loms,
-		Product: productService,
+		Product: product,
 	}
 }
+
+var (
+	ErrProductInsufficient = errors.New("product insufficient")
+)
 
 type CartItem struct {
 	SKU   uint32 `json:"sku"`
@@ -77,4 +82,26 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 	}
 
 	return res.OrderId, nil
+}
+
+func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
+	stocks, err := m.Loms.Stocks(ctx, sku)
+	log.Printf("LOMS.stocks: %+v", stocks)
+	if err != nil {
+		return err
+	}
+
+	var countTotal uint64
+	for _, stock := range stocks.Stocks {
+		countTotal += stock.Count
+		if countTotal >= uint64(count) {
+			break
+		}
+	}
+
+	if countTotal < uint64(count) {
+		return ErrProductInsufficient
+	}
+
+	return nil
 }
