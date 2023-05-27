@@ -19,14 +19,14 @@ type ProductClient interface {
 }
 
 type Model struct {
-	Loms    LomsClient
-	Product ProductClient
+	loms    LomsClient
+	product ProductClient
 }
 
 func New(loms LomsClient, product ProductClient) *Model {
 	return &Model{
-		Loms:    loms,
-		Product: product,
+		loms:    loms,
+		product: product,
 	}
 }
 
@@ -44,7 +44,7 @@ type CartItem struct {
 func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 	// TODO: There should be a call to DB to retrieve items from the cart
 
-	product, err := m.Product.GetProduct(ctx, 773297411)
+	product, err := m.product.GetProduct(ctx, 773297411)
 	log.Printf("Product.GetProduct: %+v\n", product)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 		})
 	}
 
-	res, err := m.Loms.CreateOrder(ctx, user, items)
+	res, err := m.loms.CreateOrder(ctx, user, items)
 	log.Printf("LOMS.createOrder: %+v", res)
 	if err != nil {
 		return 0, err
@@ -85,7 +85,7 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 }
 
 func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
-	stocks, err := m.Loms.Stocks(ctx, sku)
+	stocks, err := m.loms.Stocks(ctx, sku)
 	log.Printf("LOMS.stocks: %+v", stocks)
 	if err != nil {
 		return err
