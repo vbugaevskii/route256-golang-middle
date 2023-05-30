@@ -1,10 +1,10 @@
 syntax = 'proto3';
 
-package product;
+package route256.product;
 
 option go_package = "route256/product/pkg/product";
 
-service Loms {
+service ProductService {
     rpc GetProduct(RequestGetProduct) returns (ResponseGetProduct);
     rpc ListSkus(RequestListSkus) returns (ResponseListSkus);
 }

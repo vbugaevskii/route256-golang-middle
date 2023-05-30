@@ -2,9 +2,9 @@ package product
 
 import (
 	"context"
-	"net/http"
-	"route256/checkout/internal/config"
-	"route256/libs/cliwrapper"
+	pbproduct "route256/checkout/pkg/product"
+
+	"google.golang.org/grpc"
 )
 
 type RequestGetProduct struct {
@@ -28,41 +28,50 @@ type ResponseListSkus struct {
 }
 
 type ProductService struct {
-	Token string
-
-	GetProductHandler *cliwrapper.Wrapper[*RequestGetProduct, ResponseGetProduct]
-	ListSkusHandler   *cliwrapper.Wrapper[*RequestListSkus, ResponseListSkus]
+	token  string
+	client pbproduct.ProductServiceClient
 }
 
-func NewProduct(cfg config.ConfigService) *ProductService {
+func NewProductClient(con grpc.ClientConnInterface, token string) *ProductService {
 	return &ProductService{
-		Token: cfg.Token,
-		GetProductHandler: cliwrapper.New[*RequestGetProduct, ResponseGetProduct](
-			cfg.Netloc,
-			"/get_product",
-			http.MethodPost,
-		),
-		ListSkusHandler: cliwrapper.New[*RequestListSkus, ResponseListSkus](
-			cfg.Netloc,
-			"/list_skus",
-			http.MethodPost,
-		),
+		token:  token,
+		client: pbproduct.NewProductServiceClient(con),
 	}
 }
 
 func (cli *ProductService) GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error) {
-	req := RequestGetProduct{
-		Token: cli.Token,
-		SKU:   sku,
+	reqProto := pbproduct.RequestGetProduct{
+		Token: cli.token,
+		Sku:   sku,
 	}
-	return cli.GetProductHandler.Retrieve(ctx, &req)
+
+	resProto, err := cli.client.GetProduct(ctx, &reqProto)
+	if err != nil {
+		return ResponseGetProduct{}, err
+	}
+
+	res := ResponseGetProduct{
+		Name:  resProto.Name,
+		Price: resProto.Price,
+	}
+	return res, nil
 }
 
 func (cli *ProductService) ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error) {
-	req := RequestListSkus{
-		Token:         cli.Token,
+	reqProto := pbproduct.RequestListSkus{
+		Token:         cli.token,
 		StartAfterSku: startAfterSku,
 		Count:         count,
 	}
-	return cli.ListSkusHandler.Retrieve(ctx, &req)
+
+	resProto, err := cli.client.ListSkus(ctx, &reqProto)
+	if err != nil {
+		return ResponseListSkus{}, err
+	}
+
+	res := ResponseListSkus{
+		SKUList: make([]uint32, 0, len(resProto.Skus)),
+	}
+	res.SKUList = append(res.SKUList, resProto.Skus...)
+	return res, nil
 }

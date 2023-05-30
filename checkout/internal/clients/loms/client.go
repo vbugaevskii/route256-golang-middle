@@ -48,8 +48,8 @@ func (cli *LomsService) Stocks(ctx context.Context, sku uint32) (ResponseStocks,
 	reqProto := pbloms.RequestStocks{
 		Sku: sku,
 	}
-	resProto, err := cli.client.Stocks(ctx, &reqProto)
 
+	resProto, err := cli.client.Stocks(ctx, &reqProto)
 	if err != nil {
 		return ResponseStocks{}, err
 	}

@@ -47,6 +47,9 @@ curl -i localhost:8080/purchase -d '{"user": 1}'
 Клиент для grpc – [`grpcurl`](https://github.com/fullstorydev/grpcurl).
 
 ```bash
+# посмотреть, какие методы есть у сервиса
+grpcurl -plaintext route256.pavl.uk:8082 list
+
 # послать GRPC запрос севрису LOMS
 grpcurl -plaintext -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}' localhost:8081 loms.Loms/CreateOrder
 grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder

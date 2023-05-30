@@ -19,126 +19,126 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Loms_GetProduct_FullMethodName = "/product.Loms/GetProduct"
-	Loms_ListSkus_FullMethodName   = "/product.Loms/ListSkus"
+	ProductService_GetProduct_FullMethodName = "/route256.product.ProductService/GetProduct"
+	ProductService_ListSkus_FullMethodName   = "/route256.product.ProductService/ListSkus"
 )
 
-// LomsClient is the client API for Loms service.
+// ProductServiceClient is the client API for ProductService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type LomsClient interface {
+type ProductServiceClient interface {
 	GetProduct(ctx context.Context, in *RequestGetProduct, opts ...grpc.CallOption) (*ResponseGetProduct, error)
 	ListSkus(ctx context.Context, in *RequestListSkus, opts ...grpc.CallOption) (*ResponseListSkus, error)
 }
 
-type lomsClient struct {
+type productServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewLomsClient(cc grpc.ClientConnInterface) LomsClient {
-	return &lomsClient{cc}
+func NewProductServiceClient(cc grpc.ClientConnInterface) ProductServiceClient {
+	return &productServiceClient{cc}
 }
 
-func (c *lomsClient) GetProduct(ctx context.Context, in *RequestGetProduct, opts ...grpc.CallOption) (*ResponseGetProduct, error) {
+func (c *productServiceClient) GetProduct(ctx context.Context, in *RequestGetProduct, opts ...grpc.CallOption) (*ResponseGetProduct, error) {
 	out := new(ResponseGetProduct)
-	err := c.cc.Invoke(ctx, Loms_GetProduct_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProductService_GetProduct_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *lomsClient) ListSkus(ctx context.Context, in *RequestListSkus, opts ...grpc.CallOption) (*ResponseListSkus, error) {
+func (c *productServiceClient) ListSkus(ctx context.Context, in *RequestListSkus, opts ...grpc.CallOption) (*ResponseListSkus, error) {
 	out := new(ResponseListSkus)
-	err := c.cc.Invoke(ctx, Loms_ListSkus_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, ProductService_ListSkus_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// LomsServer is the server API for Loms service.
-// All implementations must embed UnimplementedLomsServer
+// ProductServiceServer is the server API for ProductService service.
+// All implementations must embed UnimplementedProductServiceServer
 // for forward compatibility
-type LomsServer interface {
+type ProductServiceServer interface {
 	GetProduct(context.Context, *RequestGetProduct) (*ResponseGetProduct, error)
 	ListSkus(context.Context, *RequestListSkus) (*ResponseListSkus, error)
-	mustEmbedUnimplementedLomsServer()
+	mustEmbedUnimplementedProductServiceServer()
 }
 
-// UnimplementedLomsServer must be embedded to have forward compatible implementations.
-type UnimplementedLomsServer struct {
+// UnimplementedProductServiceServer must be embedded to have forward compatible implementations.
+type UnimplementedProductServiceServer struct {
 }
 
-func (UnimplementedLomsServer) GetProduct(context.Context, *RequestGetProduct) (*ResponseGetProduct, error) {
+func (UnimplementedProductServiceServer) GetProduct(context.Context, *RequestGetProduct) (*ResponseGetProduct, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetProduct not implemented")
 }
-func (UnimplementedLomsServer) ListSkus(context.Context, *RequestListSkus) (*ResponseListSkus, error) {
+func (UnimplementedProductServiceServer) ListSkus(context.Context, *RequestListSkus) (*ResponseListSkus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListSkus not implemented")
 }
-func (UnimplementedLomsServer) mustEmbedUnimplementedLomsServer() {}
+func (UnimplementedProductServiceServer) mustEmbedUnimplementedProductServiceServer() {}
 
-// UnsafeLomsServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to LomsServer will
+// UnsafeProductServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ProductServiceServer will
 // result in compilation errors.
-type UnsafeLomsServer interface {
-	mustEmbedUnimplementedLomsServer()
+type UnsafeProductServiceServer interface {
+	mustEmbedUnimplementedProductServiceServer()
 }
 
-func RegisterLomsServer(s grpc.ServiceRegistrar, srv LomsServer) {
-	s.RegisterService(&Loms_ServiceDesc, srv)
+func RegisterProductServiceServer(s grpc.ServiceRegistrar, srv ProductServiceServer) {
+	s.RegisterService(&ProductService_ServiceDesc, srv)
 }
 
-func _Loms_GetProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProductService_GetProduct_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestGetProduct)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LomsServer).GetProduct(ctx, in)
+		return srv.(ProductServiceServer).GetProduct(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Loms_GetProduct_FullMethodName,
+		FullMethod: ProductService_GetProduct_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LomsServer).GetProduct(ctx, req.(*RequestGetProduct))
+		return srv.(ProductServiceServer).GetProduct(ctx, req.(*RequestGetProduct))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Loms_ListSkus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _ProductService_ListSkus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestListSkus)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(LomsServer).ListSkus(ctx, in)
+		return srv.(ProductServiceServer).ListSkus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Loms_ListSkus_FullMethodName,
+		FullMethod: ProductService_ListSkus_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LomsServer).ListSkus(ctx, req.(*RequestListSkus))
+		return srv.(ProductServiceServer).ListSkus(ctx, req.(*RequestListSkus))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// Loms_ServiceDesc is the grpc.ServiceDesc for Loms service.
+// ProductService_ServiceDesc is the grpc.ServiceDesc for ProductService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var Loms_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "product.Loms",
-	HandlerType: (*LomsServer)(nil),
+var ProductService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "route256.product.ProductService",
+	HandlerType: (*ProductServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GetProduct",
-			Handler:    _Loms_GetProduct_Handler,
+			Handler:    _ProductService_GetProduct_Handler,
 		},
 		{
 			MethodName: "ListSkus",
-			Handler:    _Loms_ListSkus_Handler,
+			Handler:    _ProductService_ListSkus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
