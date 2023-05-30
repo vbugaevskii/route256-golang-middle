@@ -43,3 +43,14 @@ curl -i localhost:8080/deleteFromCart -d '{"user": 1, "sku": 12, "count": 23}'
 curl -i localhost:8080/listCart -d '{"user": 1}'
 curl -i localhost:8080/purchase -d '{"user": 1}'
 ```
+
+Клиент для grpc – [`grpcurl`](https://github.com/fullstorydev/grpcurl).
+
+```bash
+# послать GRPC запрос севрису LOMS
+grpcurl -plaintext -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}' localhost:8081 loms.Loms/CreateOrder
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/OrderPayed
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/CancelOrder
+grpcurl -plaintext -d '{"sku": 12}' localhost:8081 loms.Loms/Stocks
+```
