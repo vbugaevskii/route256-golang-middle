@@ -50,10 +50,16 @@ curl -i localhost:8080/purchase -d '{"user": 1}'
 # посмотреть, какие методы есть у сервиса
 grpcurl -plaintext route256.pavl.uk:8082 list
 
-# послать GRPC запрос севрису LOMS
+# послать GRPC запрос сервису LOMS
 grpcurl -plaintext -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}' localhost:8081 loms.Loms/CreateOrder
 grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder
 grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/OrderPayed
 grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/CancelOrder
 grpcurl -plaintext -d '{"sku": 12}' localhost:8081 loms.Loms/Stocks
+
+# послать GRPC запрос сервису Checkout
+grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 checkout.Checkout/AddToCart
+grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 checkout.Checkout/DeleteFromCart
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase
 ```

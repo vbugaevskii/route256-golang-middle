@@ -2,20 +2,18 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"net"
+	"route256/checkout/internal/api"
 	cliloms "route256/checkout/internal/clients/loms"
 	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
-	"route256/checkout/internal/handlers/addtocart"
-	"route256/checkout/internal/handlers/deletefromcart"
-	"route256/checkout/internal/handlers/listcart"
-	"route256/checkout/internal/handlers/purchase"
-	"route256/libs/srvwrapper"
+	"route256/checkout/pkg/checkout"
 	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -50,26 +48,18 @@ func main() {
 		),
 	)
 
-	handAddToCart := addtocart.Handler{
-		Model: model,
-	}
-	http.Handle("/addToCart", srvwrapper.New(handAddToCart.Handle))
-
-	handDeleteFromCart := deletefromcart.Handler{}
-	http.Handle("/deleteFromCart", srvwrapper.New(handDeleteFromCart.Handle))
-
-	handListCart := listcart.Handler{
-		Model: model,
-	}
-	http.Handle("/listCart", srvwrapper.New(handListCart.Handle))
-
-	handPurchase := purchase.Handler{
-		Model: model,
-	}
-	http.Handle("/purchase", srvwrapper.New(handPurchase.Handle))
-
-	err = http.ListenAndServe(":"+strconv.Itoa(config.AppConfig.Port), nil)
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port))
 	if err != nil {
-		log.Fatalln("ERR: ", err)
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	s := grpc.NewServer()
+	reflection.Register(s)
+	checkout.RegisterCheckoutServer(s, api.NewService(model))
+
+	log.Printf("server listening at %v", lis.Addr())
+
+	if err = s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
 	}
 }
