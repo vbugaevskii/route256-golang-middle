@@ -13,6 +13,9 @@ import (
 	"route256/checkout/internal/handlers/purchase"
 	"route256/libs/srvwrapper"
 	"strconv"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -21,8 +24,17 @@ func main() {
 		log.Fatalln("config init", err)
 	}
 
+	connLoms, err := grpc.Dial(
+		config.AppConfig.Services.Loms.Netloc,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to server: %v", err)
+	}
+	defer connLoms.Close()
+
 	model := domain.New(
-		cliloms.NewLomsClient(config.AppConfig.Services.Loms),
+		cliloms.NewLomsClient(connLoms),
 		cliproduct.NewProduct(config.AppConfig.Services.ProductService),
 	)
 
