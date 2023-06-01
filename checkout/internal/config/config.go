@@ -13,7 +13,10 @@ type ConfigService struct {
 }
 
 type Config struct {
-	Port int `yaml:"port"`
+	Port struct {
+		GRPC int `yaml:"grpc"`
+		HTTP int `yaml:"http"`
+	} `yaml:"port"`
 
 	Services struct {
 		Loms           ConfigService `yaml:"loms"`

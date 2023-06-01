@@ -44,21 +44,29 @@ install-smartimports: bindir
 install-grpc:
 	GOBIN=${BINDIR} go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 	GOBIN=${BINDIR} go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
+	GOBIN=${BINDIR} go get -u github.com/grpc-ecosystem/grpc-gateway/v2
 
 	GOBIN=${BINDIR} go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.30.0
 	GOBIN=${BINDIR} go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
+	GOBIN=${BINDIR} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.15.2
+	GOBIN=${BINDIR} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.15.2
 
-build-proto: install-grpc $(find ${PROTODIR} -name *.proto -type f)
+${PROTODIR}/googleapis:
+	git clone https://github.com/googleapis/googleapis.git ${PROTODIR}/googleapis
+
+build-proto: install-grpc ${PROTODIR}/googleapis $(find ${PROTODIR} -name *.proto -type f)
 	mkdir -p pkg/checkout
-	${PROTOC} -I ${PROTODIR}/checkout \
+	${PROTOC} -I ${PROTODIR}/checkout -I ${PROTODIR}/googleapis \
 		--go_out=pkg/checkout --go_opt=paths=source_relative \
 		--plugin=protoc-gen-go=bin/protoc-gen-go \
 		--go-grpc_out=pkg/checkout --go-grpc_opt=paths=source_relative \
 		--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+		--grpc-gateway_out=pkg/checkout --grpc-gateway_opt=paths=source_relative \
+		--plugin=protoc-gen-grpc-gateway=bin/protoc-gen-grpc-gateway \
 		${PROTODIR}/checkout/checkout.proto
 
 	mkdir -p pkg/loms
-	${PROTOC} -I ${PROTODIR}/loms \
+	${PROTOC} -I ${PROTODIR}/loms -I ${PROTODIR}/googleapis \
 		--go_out=pkg/loms --go_opt=paths=source_relative \
 		--plugin=protoc-gen-go=bin/protoc-gen-go \
 		--go-grpc_out=pkg/loms --go-grpc_opt=paths=source_relative \
@@ -66,7 +74,7 @@ build-proto: install-grpc $(find ${PROTODIR} -name *.proto -type f)
 		${PROTODIR}/loms/loms.proto
 
 	mkdir -p pkg/product
-	${PROTOC} -I ${PROTODIR}/product \
+	${PROTOC} -I ${PROTODIR}/product -I ${PROTODIR}/googleapis \
 		--go_out=pkg/product --go_opt=paths=source_relative \
 		--plugin=protoc-gen-go=bin/protoc-gen-go \
 		--go-grpc_out=pkg/product --go-grpc_opt=paths=source_relative \

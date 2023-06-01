@@ -4,13 +4,33 @@ package checkout;
 
 option go_package = "route256/checkout/pkg/checkout";
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service Checkout {
-    rpc AddToCart(RequestAddToCart) returns (google.protobuf.Empty);
-    rpc DeleteFromCart(RequestDeleteFromCart) returns (google.protobuf.Empty);
-    rpc ListCart(RequestListCart) returns (ResponseListCart);
-    rpc Purchase(RequestPurchase) returns (ResponsePurchase);
+    rpc AddToCart(RequestAddToCart) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/addToCart"
+        };
+    }
+
+    rpc DeleteFromCart(RequestDeleteFromCart) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/deleteFromCart"
+        };
+    }
+
+    rpc ListCart(RequestListCart) returns (ResponseListCart) {
+        option (google.api.http) = {
+            get: "/listCart"
+        };
+    }
+
+    rpc Purchase(RequestPurchase) returns (ResponsePurchase) {
+        option (google.api.http) = {
+            get: "/purchase"
+        };
+    }
 }
 
 message RequestAddToCart {

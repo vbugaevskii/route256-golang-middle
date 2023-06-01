@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net"
+	"net/http"
 	"route256/checkout/internal/api"
 	cliloms "route256/checkout/internal/clients/loms"
 	cliproduct "route256/checkout/internal/clients/product"
@@ -11,6 +13,7 @@ import (
 	"route256/checkout/pkg/checkout"
 	"strconv"
 
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -48,18 +51,48 @@ func main() {
 		),
 	)
 
-	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port))
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := grpc.NewServer()
-	reflection.Register(s)
-	checkout.RegisterCheckoutServer(s, api.NewService(model))
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 
 	log.Printf("server listening at %v", lis.Addr())
 
-	if err = s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+	go func() {
+		if err = grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// NOTE: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/adding_annotations/
+
+	// Create a client connection to the gRPC server we just started
+	// This is where the gRPC-Gateway proxies the requests
+	conn, err := grpc.DialContext(
+		context.Background(),
+		lis.Addr().String(),
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalln("Failed to dial server:", err)
 	}
+
+	mux := runtime.NewServeMux()
+	checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
+	if err != nil {
+		log.Fatalln("Failed to register gateway:", err)
+	}
+
+	httpServer := &http.Server{
+		Addr:    ":" + strconv.Itoa(config.AppConfig.Port.HTTP),
+		Handler: mux,
+	}
+
+	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
+	log.Fatalln(httpServer.ListenAndServe())
 }

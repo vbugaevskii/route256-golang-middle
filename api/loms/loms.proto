@@ -4,14 +4,39 @@ package loms;
 
 option go_package = "route256/loms/pkg/loms";
 
+import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 
 service Loms {
-    rpc CreateOrder(RequestCreateOrder) returns (ResponseCreateOrder);
-    rpc ListOrder(RequestListOrder) returns (ResponseListOrder);
-    rpc OrderPayed(RequestOrderPayed) returns (google.protobuf.Empty);
-    rpc CancelOrder(RequestCancelOrder) returns (google.protobuf.Empty);
-    rpc Stocks(RequestStocks) returns (ResponseStocks);
+    rpc CreateOrder(RequestCreateOrder) returns (ResponseCreateOrder) {
+        option (google.api.http) = {
+            get: "/createOrder"
+        };
+    }
+
+    rpc ListOrder(RequestListOrder) returns (ResponseListOrder) {
+        option (google.api.http) = {
+            get: "/listOrder"
+        };
+    }
+
+    rpc OrderPayed(RequestOrderPayed) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/orderPayed"
+        };
+    }
+
+    rpc CancelOrder(RequestCancelOrder) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            get: "/cancelOrder"
+        };
+    }
+
+    rpc Stocks(RequestStocks) returns (ResponseStocks) {
+        option (google.api.http) = {
+            get: "/stocks"
+        };
+    }
 }
 
 message OrderItem {
