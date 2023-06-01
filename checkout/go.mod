@@ -2,7 +2,10 @@ module route256/checkout
 
 go 1.19
 
-require gopkg.in/yaml.v3 v3.0.1
+require (
+	gopkg.in/yaml.v3 v3.0.1
+	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
+)
 
 require (
 	github.com/golang/protobuf v1.5.3 // indirect

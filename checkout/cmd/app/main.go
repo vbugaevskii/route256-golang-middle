@@ -83,7 +83,7 @@ func main() {
 	}
 
 	mux := runtime.NewServeMux()
-	checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
+	err = checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
 	}

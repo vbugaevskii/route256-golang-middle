@@ -52,7 +52,7 @@ func main() {
 	}
 
 	mux := runtime.NewServeMux()
-	loms.RegisterLomsHandler(context.Background(), mux, conn)
+	err = loms.RegisterLomsHandler(context.Background(), mux, conn)
 	if err != nil {
 		log.Fatalln("Failed to register gateway:", err)
 	}
