@@ -41,7 +41,13 @@ install-smartimports: bindir
 		(GOBIN=${BINDIR} go install github.com/pav5000/smartimports/cmd/smartimports@latest && \
 		mv ${BINDIR}/smartimports ${SMARTIMPORTS})
 
-install-grpc:
+install-grpc-bins = \
+	${BINDIR}/protoc-gen-go \
+	${BINDIR}/protoc-gen-go-grpc \
+	${BINDIR}/protoc-gen-grpc-gateway \
+	${BINDIR}/protoc-gen-openapiv2
+
+$(install-grpc-bins):
 	GOBIN=${BINDIR} go get -u google.golang.org/protobuf/cmd/protoc-gen-go
 	GOBIN=${BINDIR} go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
 	GOBIN=${BINDIR} go get -u github.com/grpc-ecosystem/grpc-gateway/v2
@@ -51,10 +57,12 @@ install-grpc:
 	GOBIN=${BINDIR} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.15.2
 	GOBIN=${BINDIR} go install github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2@v2.15.2
 
+install-grpc: $(install-grpc-bins)
+
 ${PROTODIR}/googleapis:
 	git clone https://github.com/googleapis/googleapis.git ${PROTODIR}/googleapis
 
-build-proto: install-grpc ${PROTODIR}/googleapis $(find ${PROTODIR} -name *.proto -type f)
+build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name "*.proto" -type f)
 	mkdir -p pkg/checkout
 	${PROTOC} -I ${PROTODIR}/checkout -I ${PROTODIR}/googleapis \
 		--go_out=pkg/checkout --go_opt=paths=source_relative \
