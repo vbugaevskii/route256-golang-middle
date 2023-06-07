@@ -18,9 +18,9 @@
 
 Для этого:
 
-- Использовать разделение на слои, созданное ранее, заменив слой HTTP на GRPC.
-- Взаимодействие по HTTP полностью удалить и оставить только gRPC.
-- В каждом проекте нужно добавить в Makefile команды для генерации кода из proto файла и установки нужных зависимостей.
+- [x] Использовать разделение на слои, созданное ранее, заменив слой HTTP на GRPC.
+- [x] Взаимодействие по HTTP полностью удалить и оставить только gRPC.
+- [x] В каждом проекте нужно добавить в Makefile команды для генерации кода из proto файла и установки нужных зависимостей.
 
 Дополнительное задание на алмазик: добавить HTTP-gateway и proto-валидацию.
 
@@ -42,4 +42,24 @@ curl -i localhost:8080/addToCart -d '{"user": 1, "sku": 12, "count": 23}'
 curl -i localhost:8080/deleteFromCart -d '{"user": 1, "sku": 12, "count": 23}'
 curl -i localhost:8080/listCart -d '{"user": 1}'
 curl -i localhost:8080/purchase -d '{"user": 1}'
+```
+
+Клиент для grpc – [`grpcurl`](https://github.com/fullstorydev/grpcurl).
+
+```bash
+# посмотреть, какие методы есть у сервиса
+grpcurl -plaintext route256.pavl.uk:8082 list
+
+# послать GRPC запрос сервису LOMS
+grpcurl -plaintext -d '{"user": 1, "items": [{"sku": 12, "count": 23}]}' localhost:8081 loms.Loms/CreateOrder
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/OrderPayed
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/CancelOrder
+grpcurl -plaintext -d '{"sku": 12}' localhost:8081 loms.Loms/Stocks
+
+# послать GRPC запрос сервису Checkout
+grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 checkout.Checkout/AddToCart
+grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 checkout.Checkout/DeleteFromCart
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase
 ```

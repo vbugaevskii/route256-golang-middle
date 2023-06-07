@@ -1,9 +1,11 @@
-port: 8080
+port:
+  grpc: 8080
+  http: 8090
 
 services:
   loms:
-    netloc: "http://localhost:8081"
+    netloc: "localhost:8081"
 
   product_service:
-    netloc: "http://route256.pavl.uk:8080"
+    netloc: "route256.pavl.uk:8082"
     token: "testtoken"
