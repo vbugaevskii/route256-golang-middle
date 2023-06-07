@@ -52,14 +52,14 @@ message RequestListCart {
     int64 user = 1;
 }
 
-message CartItem {
-    uint32 sku = 1;
-    uint32 count = 2;
-    string name = 3;
-    uint32 price = 4;
-}
-
 message ResponseListCart {
+    message CartItem {
+        uint32 sku = 1;
+        uint32 count = 2;
+        string name = 3;
+        uint32 price = 4;
+    }
+
     repeated CartItem items = 1;
     uint32 totalPrice = 2;
 }

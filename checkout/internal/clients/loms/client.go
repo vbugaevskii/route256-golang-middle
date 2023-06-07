@@ -75,11 +75,11 @@ func (cli *LomsService) CreateOrder(
 ) (ResponseCreateOrder, error) {
 	reqProto := pbloms.RequestCreateOrder{
 		User:  user,
-		Items: make([]*pbloms.OrderItem, 0, len(items)),
+		Items: make([]*pbloms.RequestCreateOrder_OrderItem, 0, len(items)),
 	}
 
 	for _, item := range items {
-		reqProto.Items = append(reqProto.Items, &pbloms.OrderItem{
+		reqProto.Items = append(reqProto.Items, &pbloms.RequestCreateOrder_OrderItem{
 			Sku:   item.SKU,
 			Count: item.Count,
 		})

@@ -10,7 +10,7 @@ func (s *Service) Stocks(ctx context.Context, req *loms.RequestStocks) (*loms.Re
 	log.Printf("%+v", req)
 
 	return &loms.ResponseStocks{
-		Stocks: []*loms.StockItem{
+		Stocks: []*loms.ResponseStocks_StockItem{
 			{WarehouseID: 1, Count: 200},
 		},
 	}, nil

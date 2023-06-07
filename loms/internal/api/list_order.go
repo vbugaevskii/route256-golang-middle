@@ -28,7 +28,7 @@ func (s *Service) ListOrder(ctx context.Context, req *loms.RequestListOrder) (*l
 	return &loms.ResponseListOrder{
 		Status: string(New),
 		User:   42,
-		Items: []*loms.OrderItem{
+		Items: []*loms.ResponseListOrder_OrderItem{
 			{Sku: 1, Count: 200},
 		},
 	}, nil

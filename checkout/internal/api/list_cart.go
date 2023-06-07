@@ -19,10 +19,10 @@ func (s *Service) ListCart(ctx context.Context, req *checkout.RequestListCart) (
 	}
 
 	cart := checkout.ResponseListCart{}
-	cart.Items = make([]*checkout.CartItem, 0, len(items))
+	cart.Items = make([]*checkout.ResponseListCart_CartItem, 0, len(items))
 
 	for _, item := range items {
-		cart.Items = append(cart.Items, &checkout.CartItem{
+		cart.Items = append(cart.Items, &checkout.ResponseListCart_CartItem{
 			Sku:   item.SKU,
 			Count: uint32(item.Count),
 			Name:  item.Name,

@@ -42,12 +42,12 @@ service Loms {
     }
 }
 
-message OrderItem {
-    uint32 sku = 1;
-    uint64 count = 2;
-}
-
 message RequestCreateOrder {
+    message OrderItem {
+        uint32 sku = 1;
+        uint64 count = 2;
+    }
+
     int64 user = 1;
     repeated OrderItem items = 2;
 }
@@ -61,6 +61,11 @@ message RequestListOrder {
 }
 
 message ResponseListOrder {
+    message OrderItem {
+        uint32 sku = 1;
+        uint64 count = 2;
+    }
+
     string status = 1;
     int64 user = 2;
     repeated OrderItem items = 3;
@@ -78,11 +83,11 @@ message RequestStocks {
     uint32 sku = 1;
 }
 
-message StockItem {
+message ResponseStocks {
+    message StockItem {
         int64 warehouseID = 1;
         uint64 count = 2;
     }
 
-message ResponseStocks {
     repeated StockItem stocks = 1;
 }
