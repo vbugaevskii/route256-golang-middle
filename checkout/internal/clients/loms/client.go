@@ -8,30 +8,30 @@ import (
 )
 
 type RequestStocks struct {
-	SKU uint32 `json:"sku"`
+	SKU uint32
 }
 
 type ResponseStockItem struct {
-	WarehouseID int64  `json:"warehouseID"`
-	Count       uint64 `json:"count"`
+	WarehouseID int64
+	Count       uint64
 }
 
 type ResponseStocks struct {
-	Stocks []ResponseStockItem `json:"stocks"`
+	Stocks []ResponseStockItem
 }
 
 type RequestCreateOrderItem struct {
-	SKU   uint32 `json:"sku"`
-	Count uint64 `json:"count"`
+	SKU   uint32
+	Count uint64
 }
 
 type RequestCreateOrder struct {
-	User  int64                    `json:"user"`
-	Items []RequestCreateOrderItem `json:"items"`
+	User  int64
+	Items []RequestCreateOrderItem
 }
 
 type ResponseCreateOrder struct {
-	OrderId int64 `json:"orderID"`
+	OrderId int64
 }
 
 type LomsService struct {
