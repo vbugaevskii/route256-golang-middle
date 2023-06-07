@@ -10,7 +10,7 @@ PACKAGE=route256/loms/cmd/app
 
 all: format build test lint
 
-build: bindir build-proto
+build: bindir
 	go build -o ${BINDIR}/app ${PACKAGE}
 
 test:
@@ -63,14 +63,6 @@ ${PROTODIR}/googleapis:
 	git clone https://github.com/googleapis/googleapis.git ${PROTODIR}/googleapis
 
 build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name "*.proto" -type f)
-	mkdir -p pkg/checkout
-	${PROTOC} -I ${PROTODIR}/checkout -I ${PROTODIR}/googleapis \
-		--go_out=pkg/checkout --go_opt=paths=source_relative \
-		--plugin=protoc-gen-go=bin/protoc-gen-go \
-		--go-grpc_out=pkg/checkout --go-grpc_opt=paths=source_relative \
-		--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
-		${PROTODIR}/checkout/checkout.proto
-
 	mkdir -p pkg/loms
 	${PROTOC} -I ${PROTODIR}/loms -I ${PROTODIR}/googleapis \
 		--go_out=pkg/loms --go_opt=paths=source_relative \
@@ -80,11 +72,3 @@ build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name 
 		--grpc-gateway_out=pkg/loms --grpc-gateway_opt=paths=source_relative \
 		--plugin=protoc-gen-grpc-gateway=bin/protoc-gen-grpc-gateway \
 		${PROTODIR}/loms/loms.proto
-
-	mkdir -p pkg/product
-	${PROTOC} -I ${PROTODIR}/product -I ${PROTODIR}/googleapis \
-		--go_out=pkg/product --go_opt=paths=source_relative \
-		--plugin=protoc-gen-go=bin/protoc-gen-go \
-		--go-grpc_out=pkg/product --go-grpc_opt=paths=source_relative \
-		--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
-		${PROTODIR}/product/product.proto

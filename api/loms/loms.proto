@@ -10,7 +10,8 @@ import "google/protobuf/empty.proto";
 service Loms {
     rpc CreateOrder(RequestCreateOrder) returns (ResponseCreateOrder) {
         option (google.api.http) = {
-            get: "/createOrder"
+            post: "/createOrder"
+            body: "*"
         };
     }
 
@@ -22,13 +23,15 @@ service Loms {
 
     rpc OrderPayed(RequestOrderPayed) returns (google.protobuf.Empty) {
         option (google.api.http) = {
-            get: "/orderPayed"
+            post: "/orderPayed"
+            body: "*"
         };
     }
 
     rpc CancelOrder(RequestCancelOrder) returns (google.protobuf.Empty) {
         option (google.api.http) = {
-            get: "/cancelOrder"
+            post: "/cancelOrder"
+            body: "*"
         };
     }
 

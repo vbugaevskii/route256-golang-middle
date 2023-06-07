@@ -10,13 +10,15 @@ import "google/protobuf/empty.proto";
 service Checkout {
     rpc AddToCart(RequestAddToCart) returns (google.protobuf.Empty) {
         option (google.api.http) = {
-            get: "/addToCart"
+            post: "/addToCart"
+            body: "*"
         };
     }
 
     rpc DeleteFromCart(RequestDeleteFromCart) returns (google.protobuf.Empty) {
         option (google.api.http) = {
-            get: "/deleteFromCart"
+            post: "/deleteFromCart"
+            body: "*"
         };
     }
 
@@ -28,7 +30,8 @@ service Checkout {
 
     rpc Purchase(RequestPurchase) returns (ResponsePurchase) {
         option (google.api.http) = {
-            get: "/purchase"
+            post: "/purchase"
+            body: "*"
         };
     }
 }

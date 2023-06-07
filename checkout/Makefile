@@ -10,7 +10,7 @@ PACKAGE=route256/checkout/cmd/app
 
 all: format build test lint
 
-build: bindir build-proto
+build: bindir
 	go build -o ${BINDIR}/app ${PACKAGE}
 
 test:
