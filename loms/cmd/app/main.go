@@ -1,36 +1,67 @@
 package main
 
 import (
+	"context"
 	"log"
+	"net"
 	"net/http"
-	"route256/libs/srvwrapper"
-	"route256/loms/internal/handlers/cancelorder"
-	"route256/loms/internal/handlers/createorder"
-	"route256/loms/internal/handlers/listorder"
-	"route256/loms/internal/handlers/orderpayed"
-	"route256/loms/internal/handlers/stocks"
+	"route256/loms/internal/api"
+	"route256/loms/pkg/loms"
+
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/reflection"
 )
 
-const port = ":8081"
+const (
+	grpcPort = ":8081"
+	httpPort = ":8091"
+)
 
 func main() {
-	handCreateOrder := createorder.Handler{}
-	http.Handle("/createOrder", srvwrapper.New(handCreateOrder.Handle))
-
-	handListOrder := &listorder.Handler{}
-	http.Handle("/listOrder", srvwrapper.New(handListOrder.Handle))
-
-	handOrderPayed := orderpayed.Handler{}
-	http.Handle("/orderPayed", srvwrapper.New(handOrderPayed.Handle))
-
-	handCancelOrder := cancelorder.Handler{}
-	http.Handle("/cancelOrder", srvwrapper.New(handCancelOrder.Handle))
-
-	handStocks := stocks.Handler{}
-	http.Handle("/stocks", srvwrapper.New(handStocks.Handle))
-
-	err := http.ListenAndServe(port, nil)
+	lis, err := net.Listen("tcp", grpcPort)
 	if err != nil {
-		log.Fatalln("ERR: ", err)
+		log.Fatalf("failed to listen: %v", err)
 	}
+
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	loms.RegisterLomsServer(grpcServer, api.NewService())
+
+	log.Printf("server listening at %v", lis.Addr())
+
+	go func() {
+		if err = grpcServer.Serve(lis); err != nil {
+			log.Fatalf("failed to serve: %v", err)
+		}
+	}()
+
+	// NOTE: https://grpc-ecosystem.github.io/grpc-gateway/docs/tutorials/adding_annotations/
+
+	// Create a client connection to the gRPC server we just started
+	// This is where the gRPC-Gateway proxies the requests
+	conn, err := grpc.DialContext(
+		context.Background(),
+		lis.Addr().String(),
+		grpc.WithBlock(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+	if err != nil {
+		log.Fatalln("Failed to dial server:", err)
+	}
+
+	mux := runtime.NewServeMux()
+	err = loms.RegisterLomsHandler(context.Background(), mux, conn)
+	if err != nil {
+		log.Fatalln("Failed to register gateway:", err)
+	}
+
+	httpServer := &http.Server{
+		Addr:    httpPort,
+		Handler: mux,
+	}
+
+	log.Printf("Serving gRPC-Gateway on %s\n", httpPort)
+	log.Fatalln(httpServer.ListenAndServe())
 }

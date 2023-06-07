@@ -2,61 +2,70 @@ package loms
 
 import (
 	"context"
-	"net/http"
-	"route256/checkout/internal/config"
-	"route256/libs/cliwrapper"
+	pbloms "route256/checkout/pkg/loms"
+
+	"google.golang.org/grpc"
 )
 
 type RequestStocks struct {
-	SKU uint32 `json:"sku"`
+	SKU uint32
+}
+
+type ResponseStockItem struct {
+	WarehouseID int64
+	Count       uint64
 }
 
 type ResponseStocks struct {
-	Stocks []struct {
-		WarehouseID int64  `json:"warehouseID"`
-		Count       uint64 `json:"count"`
-	} `json:"stocks"`
+	Stocks []ResponseStockItem
 }
 
 type RequestCreateOrderItem struct {
-	SKU   uint32 `json:"sku"`
-	Count uint64 `json:"count"`
+	SKU   uint32
+	Count uint64
 }
 
 type RequestCreateOrder struct {
-	User  int64                    `json:"user"`
-	Items []RequestCreateOrderItem `json:"items"`
+	User  int64
+	Items []RequestCreateOrderItem
 }
 
 type ResponseCreateOrder struct {
-	OrderId int64 `json:"orderID"`
+	OrderId int64
 }
 
 type LomsService struct {
-	StocksHandler      *cliwrapper.Wrapper[*RequestStocks, ResponseStocks]
-	CreateOrderHandler *cliwrapper.Wrapper[*RequestCreateOrder, ResponseCreateOrder]
+	client pbloms.LomsClient
 }
 
-func NewLomsClient(cfg config.ConfigService) *LomsService {
+func NewLomsClient(con grpc.ClientConnInterface) *LomsService {
 	return &LomsService{
-		StocksHandler: cliwrapper.New[*RequestStocks, ResponseStocks](
-			cfg.Netloc,
-			"/stocks",
-			http.MethodPost,
-		),
-		CreateOrderHandler: cliwrapper.New[*RequestCreateOrder, ResponseCreateOrder](
-			cfg.Netloc,
-			"/createOrder",
-			http.MethodPost,
-		),
+		client: pbloms.NewLomsClient(con),
 	}
 }
 
 func (cli *LomsService) Stocks(ctx context.Context, sku uint32) (ResponseStocks, error) {
-	req := RequestStocks{
-		SKU: sku,
+	reqProto := pbloms.RequestStocks{
+		Sku: sku,
 	}
-	return cli.StocksHandler.Retrieve(ctx, &req)
+
+	resProto, err := cli.client.Stocks(ctx, &reqProto)
+	if err != nil {
+		return ResponseStocks{}, err
+	}
+
+	res := ResponseStocks{
+		Stocks: make([]ResponseStockItem, 0, len(resProto.Stocks)),
+	}
+
+	for _, item := range resProto.Stocks {
+		res.Stocks = append(res.Stocks, ResponseStockItem{
+			WarehouseID: item.WarehouseID,
+			Count:       item.Count,
+		})
+	}
+
+	return res, nil
 }
 
 func (cli *LomsService) CreateOrder(
@@ -64,9 +73,25 @@ func (cli *LomsService) CreateOrder(
 	user int64,
 	items []RequestCreateOrderItem,
 ) (ResponseCreateOrder, error) {
-	req := RequestCreateOrder{
+	reqProto := pbloms.RequestCreateOrder{
 		User:  user,
-		Items: items,
+		Items: make([]*pbloms.RequestCreateOrder_OrderItem, 0, len(items)),
 	}
-	return cli.CreateOrderHandler.Retrieve(ctx, &req)
+
+	for _, item := range items {
+		reqProto.Items = append(reqProto.Items, &pbloms.RequestCreateOrder_OrderItem{
+			Sku:   item.SKU,
+			Count: item.Count,
+		})
+	}
+
+	resProto, err := cli.client.CreateOrder(ctx, &reqProto)
+	if err != nil {
+		return ResponseCreateOrder{}, err
+	}
+
+	res := ResponseCreateOrder{
+		OrderId: resProto.OrderID,
+	}
+	return res, nil
 }
