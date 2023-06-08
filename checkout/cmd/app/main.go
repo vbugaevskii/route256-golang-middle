@@ -10,7 +10,7 @@ import (
 	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
-	pdcartitems "route256/checkout/internal/repository/postgres/cartitems"
+	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
 	"strconv"
 
@@ -60,7 +60,7 @@ func main() {
 			connProduct,
 			config.AppConfig.Services.ProductService.Token,
 		),
-		pdcartitems.NewCartItemsRepository(pool),
+		pgcartitems.NewCartItemsRepository(pool),
 	)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
