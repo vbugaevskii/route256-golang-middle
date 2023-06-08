@@ -78,3 +78,10 @@ grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 check
 grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart
 grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase
 ```
+
+Клиент для накатки миграций - [`goose`](https://github.com/pressly/goose)
+
+```bash
+# создать миграцию init
+goose create init sql
+```
