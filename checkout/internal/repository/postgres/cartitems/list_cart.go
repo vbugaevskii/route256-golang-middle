@@ -39,7 +39,7 @@ func ConvertCartItems(itemsSchema []schema.CartItem) []domain.CartItem {
 	for _, v := range itemsSchema {
 		itemsDomain = append(itemsDomain, domain.CartItem{
 			SKU:   v.SKU,
-			Count: uint16(v.Count),
+			Count: v.Count,
 		})
 	}
 
