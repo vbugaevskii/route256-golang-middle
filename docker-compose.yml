@@ -12,25 +12,25 @@ volumes:
     external: true
 
 services:
-  # checkout:
-  #   image: checkout
-  #   build: ./checkout/
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - checkout-postgres-db
-  #   networks:
-  #     - net
+  checkout:
+    image: checkout
+    build: ./checkout/
+    ports:
+      - "8080:8080"
+    depends_on:
+      - checkout-postgres-db
+    networks:
+      - net
 
-  # loms:
-  #   image: loms
-  #   build: ./loms/
-  #   ports:
-  #     - "8081:8081"
-  #   depends_on:
-  #     - loms-postgres-db
-  #   networks:
-  #     - net
+  loms:
+    image: loms
+    build: ./loms/
+    ports:
+      - "8081:8081"
+    depends_on:
+      - loms-postgres-db
+    networks:
+      - net
 
   # notification:
   #   image: notification
