@@ -23,16 +23,16 @@ type CartItemsRepository interface {
 }
 
 type Model struct {
-	loms          LomsClient
-	product       ProductClient
-	cartItemsRepo CartItemsRepository
+	loms      LomsClient
+	product   ProductClient
+	cartItems CartItemsRepository
 }
 
-func New(loms LomsClient, product ProductClient, cartItemsRepo CartItemsRepository) *Model {
+func New(loms LomsClient, product ProductClient, cartItems CartItemsRepository) *Model {
 	return &Model{
-		loms:          loms,
-		product:       product,
-		cartItemsRepo: cartItemsRepo,
+		loms:      loms,
+		product:   product,
+		cartItems: cartItems,
 	}
 }
 
@@ -48,7 +48,7 @@ type CartItem struct {
 }
 
 func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
-	cartItems, err := m.cartItemsRepo.ListCart(ctx, user)
+	cartItems, err := m.cartItems.ListCart(ctx, user)
 	log.Printf("CartItems.ListCart: %+v\n", cartItems)
 	if err != nil {
 		return nil, err
