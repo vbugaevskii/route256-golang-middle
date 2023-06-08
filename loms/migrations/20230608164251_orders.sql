@@ -2,10 +2,10 @@
 -- +goose StatementBegin
 CREATE TYPE StatusType AS ENUM (
     'New',
-	'AwaitingPayment',
-	'Failed',
-	'Payed',
-	'Cancelled'
+    'AwaitingPayment',
+    'Failed',
+    'Payed',
+    'Cancelled'
 );
 
 CREATE TABLE IF NOT EXISTS orders (
