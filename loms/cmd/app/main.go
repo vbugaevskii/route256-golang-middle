@@ -6,28 +6,50 @@ import (
 	"net"
 	"net/http"
 	"route256/loms/internal/api"
+	"route256/loms/internal/config"
+	"route256/loms/internal/domain"
+	"route256/loms/internal/repository/postgres/orders"
+	reserves "route256/loms/internal/repository/postgres/ordersreservations"
+	"route256/loms/internal/repository/postgres/stocks"
 	"route256/loms/pkg/loms"
+	"strconv"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
-const (
-	grpcPort = ":8081"
-	httpPort = ":8091"
-)
-
 func main() {
-	lis, err := net.Listen("tcp", grpcPort)
+	err := config.Init()
+	if err != nil {
+		log.Fatalln("config init", err)
+	}
+
+	pool, err := pgxpool.Connect(
+		context.Background(),
+		config.AppConfig.Postgres.URL(),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to db: %v", err)
+	}
+	defer pool.Close()
+
+	model := domain.New(
+		stocks.NewStocksRepository(pool),
+		orders.NewOrdersRepository(pool),
+		reserves.NewOrdersReservationsRepository(pool),
+	)
+
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	loms.RegisterLomsServer(grpcServer, api.NewService())
+	loms.RegisterLomsServer(grpcServer, api.NewService(model))
 
 	log.Printf("server listening at %v", lis.Addr())
 
@@ -58,10 +80,10 @@ func main() {
 	}
 
 	httpServer := &http.Server{
-		Addr:    httpPort,
+		Addr:    ":" + strconv.Itoa(config.AppConfig.Port.HTTP),
 		Handler: mux,
 	}
 
-	log.Printf("Serving gRPC-Gateway on %s\n", httpPort)
+	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
 	log.Fatalln(httpServer.ListenAndServe())
 }

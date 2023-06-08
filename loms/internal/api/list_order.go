@@ -23,7 +23,10 @@ func (s *Service) ListOrder(ctx context.Context, req *loms.RequestListOrder) (*l
 		return nil, ErrOrderNotFound
 	}
 
-	// TODO: add communication with product-service
+	_, _ = s.model.ListOrder(ctx, req.OrderID)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	return &loms.ResponseListOrder{
 		Status: string(New),
