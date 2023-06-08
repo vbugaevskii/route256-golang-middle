@@ -3,6 +3,7 @@ package domain
 import "context"
 
 type StocksRepository interface {
+	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
 }
 
 type OrdersRepository interface {
@@ -54,4 +55,14 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 	}
 
 	return order, nil
+}
+
+type StocksItem struct {
+	WarehouseId int64
+	SKU         uint32
+	Count       uint16
+}
+
+func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
+	return m.stocks.Stocks(ctx, sku)
 }
