@@ -18,15 +18,21 @@ type ProductClient interface {
 	ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (cliproduct.ResponseListSkus, error)
 }
 
-type Model struct {
-	loms    LomsClient
-	product ProductClient
+type CartItemsRepository interface {
+	ListCart(ctx context.Context, user int64) ([]CartItem, error)
 }
 
-func New(loms LomsClient, product ProductClient) *Model {
+type Model struct {
+	loms          LomsClient
+	product       ProductClient
+	cartItemsRepo CartItemsRepository
+}
+
+func New(loms LomsClient, product ProductClient, cartItemsRepo CartItemsRepository) *Model {
 	return &Model{
-		loms:    loms,
-		product: product,
+		loms:          loms,
+		product:       product,
+		cartItemsRepo: cartItemsRepo,
 	}
 }
 
@@ -42,7 +48,11 @@ type CartItem struct {
 }
 
 func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
-	// TODO: There should be a call to DB to retrieve items from the cart
+	cartItems, err := m.cartItemsRepo.ListCart(ctx, user)
+	log.Printf("CartItems.ListCart: %+v\n", cartItems)
+	if err != nil {
+		return nil, err
+	}
 
 	product, err := m.product.GetProduct(ctx, 773297411)
 	log.Printf("Product.GetProduct: %+v\n", product)
@@ -50,14 +60,14 @@ func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 		return nil, err
 	}
 
-	return []CartItem{
-		{
-			SKU:   773297411,
-			Count: 2,
-			Name:  product.Name,
-			Price: product.Price,
-		},
-	}, nil
+	cartItems = append(cartItems, CartItem{
+		SKU:   773297411,
+		Count: 2,
+		Name:  product.Name,
+		Price: product.Price,
+	})
+
+	return cartItems, nil
 }
 
 func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
