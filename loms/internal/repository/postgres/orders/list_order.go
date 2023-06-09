@@ -14,7 +14,7 @@ import (
 
 func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order, error) {
 	query := sq.
-		Select("order_id", "user_id", "status", "created_at", "updated_at").
+		Select("order_id", "user_id", "status").
 		From(TableNameOrders).
 		Where(sq.Eq{"order_id": orderId})
 

@@ -14,10 +14,9 @@ import (
 
 func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksItem, error) {
 	query := sq.
-		Select("warehouse_id", "sku", "count", "created_at", "updated_at", "deleted_at").
+		Select("warehouse_id", "sku", "count").
 		From(TableNameStocks).
 		Where(sq.Eq{"sku": sku}).
-		Where(sq.NotEq{"deleted_at": nil}).
 		Where(sq.Gt{"count": 0})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()

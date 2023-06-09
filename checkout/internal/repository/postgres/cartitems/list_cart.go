@@ -13,9 +13,9 @@ import (
 
 func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartItem, error) {
 	query := sq.
-		Select("user_id", "sku", "count", "created_at", "updated_at", "deleted_at").
+		Select("user_id", "sku", "count").
 		From(TableNameCartItems).
-		Where(sq.Eq{"user_id": user, "deleted_at": nil})
+		Where(sq.Eq{"user_id": user})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
