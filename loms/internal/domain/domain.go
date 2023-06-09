@@ -13,13 +13,15 @@ type StocksRepository interface {
 type OrdersRepository interface {
 	ListOrder(ctx context.Context, orderId int64) (Order, error)
 	CreateOrder(ctx context.Context, userId int64) (int64, error)
-	UpdateOrder(ctx context.Context, orderId int64, status StatusType) error
+
+	SetOrderStatus(ctx context.Context, orderId int64, status StatusType) error
 }
 
 type OrdersReservationsRepository interface {
 	ListOrder(ctx context.Context, orderId int64) ([]OrderItem, error)
 	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
 	CreateOrder(ctx context.Context, orderId int64, items []OrdersReservationsItem) error
+	CancelOrder(ctx context.Context, orderId int64) error
 }
 
 type Model struct {
@@ -125,9 +127,9 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 	defer func() {
 		if err != nil {
-			m.orders.UpdateOrder(ctx, orderId, Failed)
+			m.orders.SetOrderStatus(ctx, orderId, Failed)
 		} else {
-			m.orders.UpdateOrder(ctx, orderId, AwaitingPayment)
+			m.orders.SetOrderStatus(ctx, orderId, AwaitingPayment)
 		}
 	}()
 
@@ -176,4 +178,20 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 	}
 
 	return orderId, nil
+}
+
+func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
+	var err error
+
+	err = m.reservations.CancelOrder(ctx, orderId)
+	if err != nil {
+		return err
+	}
+
+	err = m.orders.SetOrderStatus(ctx, orderId, Cancelled)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
