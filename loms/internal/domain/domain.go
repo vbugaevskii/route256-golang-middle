@@ -7,21 +7,21 @@ import (
 )
 
 type StocksRepository interface {
-	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
+	ListStocks(ctx context.Context, sku uint32) ([]StocksItem, error)
+	// OrderPayed(ctx context.Context, sku uint32, stocks []StocksItem) error
 }
 
 type OrdersRepository interface {
 	ListOrder(ctx context.Context, orderId int64) (Order, error)
 	CreateOrder(ctx context.Context, userId int64) (int64, error)
-
-	SetOrderStatus(ctx context.Context, orderId int64, status StatusType) error
+	UpdateOrderStatus(ctx context.Context, orderId int64, status StatusType) error
 }
 
 type OrdersReservationsRepository interface {
-	ListOrder(ctx context.Context, orderId int64) ([]OrdersReservationsItem, error)
-	Stocks(ctx context.Context, sku uint32) ([]OrdersReservationsItem, error)
-	CreateOrder(ctx context.Context, orderId int64, items []OrdersReservationsItem) error
-	CancelOrder(ctx context.Context, orderId int64) error
+	ListOrderReservations(ctx context.Context, orderId int64) ([]OrdersReservationsItem, error)
+	InsertOrderReservations(ctx context.Context, orderId int64, items []OrdersReservationsItem) error
+	ListSkuReservations(ctx context.Context, sku uint32) ([]OrdersReservationsItem, error)
+	DeleteOrderReservations(ctx context.Context, orderId int64) error
 }
 
 type Model struct {
@@ -69,7 +69,7 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 		return Order{}, err
 	}
 
-	itemsReserved, err := m.reservations.ListOrder(ctx, orderId)
+	itemsReserved, err := m.reservations.ListOrderReservations(ctx, orderId)
 	if err != nil {
 		return Order{}, err
 	}
@@ -96,7 +96,7 @@ type StocksItem struct {
 }
 
 func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
-	stocksResevered, err := m.reservations.Stocks(ctx, sku)
+	stocksResevered, err := m.reservations.ListSkuReservations(ctx, sku)
 	log.Printf("OrdersReservations.Stocks: %+v\n", stocksResevered)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 		stocksReseveredMap[item.WarehouseId] += item.Count
 	}
 
-	stocks, err := m.stocks.Stocks(ctx, sku)
+	stocks, err := m.stocks.ListStocks(ctx, sku)
 	log.Printf("Stocks.Stocks: %+v\n", stocks)
 	if err != nil {
 		return nil, err
@@ -140,9 +140,9 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 	defer func() {
 		if err != nil {
-			m.orders.SetOrderStatus(ctx, orderId, Failed)
+			m.orders.UpdateOrderStatus(ctx, orderId, Failed)
 		} else {
-			m.orders.SetOrderStatus(ctx, orderId, AwaitingPayment)
+			m.orders.UpdateOrderStatus(ctx, orderId, AwaitingPayment)
 		}
 	}()
 
@@ -150,7 +150,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 	for _, item := range items {
 		var stocks []StocksItem // to make defer work
 
-		stocks, err = m.stocks.Stocks(ctx, item.Sku)
+		stocks, err = m.stocks.ListStocks(ctx, item.Sku)
 		log.Printf("Stocks.Stocks: %+v\n", stocks)
 		if err != nil {
 			return orderId, err
@@ -185,7 +185,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		}
 	}
 
-	err = m.reservations.CreateOrder(ctx, orderId, itemsReservered)
+	err = m.reservations.InsertOrderReservations(ctx, orderId, itemsReservered)
 	if err != nil {
 		return orderId, err
 	}
@@ -196,12 +196,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	var err error
 
-	err = m.reservations.CancelOrder(ctx, orderId)
+	err = m.reservations.DeleteOrderReservations(ctx, orderId)
 	if err != nil {
 		return err
 	}
 
-	err = m.orders.SetOrderStatus(ctx, orderId, Cancelled)
+	err = m.orders.UpdateOrderStatus(ctx, orderId, Cancelled)
 	if err != nil {
 		return err
 	}
