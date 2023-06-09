@@ -13,10 +13,10 @@ import (
 
 func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksItem, error) {
 	query := sq.
-		Select("warehouse_id", "sku", "count").
+		Select(ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
-		Where(sq.Eq{"sku": sku}).
-		Where(sq.Gt{"count": 0})
+		Where(sq.Eq{ColumnSKU: sku}).
+		Where(sq.Gt{ColumnCount: 0})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

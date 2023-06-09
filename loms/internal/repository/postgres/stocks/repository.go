@@ -12,4 +12,10 @@ func NewStocksRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const TableName = "stocks"
+const (
+	TableName = "stocks"
+
+	ColumnWarehouseId = "warehouse_id"
+	ColumnSKU         = "sku"
+	ColumnCount       = "count"
+)
