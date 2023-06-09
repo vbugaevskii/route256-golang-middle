@@ -126,6 +126,8 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 	defer func() {
 		if err != nil {
 			m.orders.UpdateOrder(ctx, orderId, Failed)
+		} else {
+			m.orders.UpdateOrder(ctx, orderId, AwaitingPayment)
 		}
 	}()
 
