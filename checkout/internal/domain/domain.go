@@ -55,25 +55,23 @@ func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
 		return nil, err
 	}
 
-	product, err := m.product.GetProduct(ctx, 773297411)
-	log.Printf("Product.GetProduct: %+v\n", product)
-	if err != nil {
-		return nil, err
-	}
+	for _, item := range cartItems {
+		product, err := m.product.GetProduct(ctx, item.SKU)
+		log.Printf("Product.GetProduct: %+v\n", product)
+		if err != nil {
+			return nil, err
+		}
 
-	cartItems = append(cartItems, CartItem{
-		SKU:   773297411,
-		Count: 2,
-		Name:  product.Name,
-		Price: product.Price,
-	})
+		item.Name = product.Name
+		item.Price = product.Price
+	}
 
 	return cartItems, nil
 }
 
 func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 	cart, err := m.ListCart(ctx, user)
-	log.Printf("Checkout.listcart: %+v", cart)
+	log.Printf("Checkout.ListCart: %+v", cart)
 	if err != nil {
 		return 0, err
 	}
@@ -87,7 +85,7 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 	}
 
 	res, err := m.loms.CreateOrder(ctx, user, items)
-	log.Printf("LOMS.createOrder: %+v", res)
+	log.Printf("LOMS.CreateOrder: %+v", res)
 	if err != nil {
 		return 0, err
 	}
@@ -110,7 +108,7 @@ func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uin
 	}
 
 	stocks, err := m.loms.Stocks(ctx, sku)
-	log.Printf("LOMS.stocks: %+v", stocks)
+	log.Printf("LOMS.Stocks: %+v", stocks)
 	if err != nil {
 		return err
 	}
