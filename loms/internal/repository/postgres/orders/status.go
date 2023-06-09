@@ -51,8 +51,8 @@ func ConvStatusSchemaDomain(statusSchema schema.StatusType) domain.StatusType {
 func (r *Repository) SetOrderStatus(ctx context.Context, orderId int64, status domain.StatusType) error {
 	query := sq.
 		Update(TableName).
-		Set("status", ConvStatusDomainSchema(status)).
-		Where(sq.Eq{"order_id": orderId})
+		Set(ColumnStatus, ConvStatusDomainSchema(status)).
+		Where(sq.Eq{ColumnOrderId: orderId})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

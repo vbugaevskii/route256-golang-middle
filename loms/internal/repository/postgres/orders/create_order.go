@@ -12,9 +12,9 @@ import (
 func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, error) {
 	query := sq.
 		Insert(TableName).
-		Columns("user_id", "status").
+		Columns(ColumnUserId, ColumnStatus).
 		Values(userId, schema.New).
-		Suffix(fmt.Sprintf("RETURNING %s", "order_id"))
+		Suffix(fmt.Sprintf("RETURNING %s", ColumnOrderId))
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
