@@ -15,5 +15,6 @@ func (s *Service) DeleteFromCart(ctx context.Context, req *checkout.RequestDelet
 		return &emptypb.Empty{}, ErrUserNotFound
 	}
 
-	return &emptypb.Empty{}, nil
+	err := s.model.DeleteFromCart(ctx, req.User, req.Sku, uint16(req.Count))
+	return &emptypb.Empty{}, err
 }

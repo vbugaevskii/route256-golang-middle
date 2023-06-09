@@ -134,3 +134,31 @@ func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uin
 
 	return nil
 }
+
+func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, count uint16) error {
+	cartItems, err := m.cartItems.ListCart(ctx, user)
+	log.Printf("CartItems.ListCart: %+v\n", cartItems)
+	if err != nil {
+		return err
+	}
+
+	var countInCart uint16
+	for _, item := range cartItems {
+		if item.SKU == sku {
+			countInCart += item.Count
+		}
+	}
+
+	if countInCart < count {
+		countInCart = 0
+	} else {
+		countInCart -= count
+	}
+
+	err = m.cartItems.AddToCart(ctx, user, sku, countInCart)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
