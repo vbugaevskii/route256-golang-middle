@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
-	"github.com/georgysavva/scany/pgxscan"
 )
 
 func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order, error) {
@@ -25,21 +25,12 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	var result []schema.Order
-	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
-	if err != nil {
-		return domain.Order{}, fmt.Errorf("exec query for filter: %s", err)
-	}
-	if len(result) == 0 {
-		return domain.Order{}, fmt.Errorf("order not found")
+	row := r.pool.QueryRow(ctx, queryRaw, queryArgs...)
+
+	var order schema.Order
+	if err := row.Scan(&order.OrderId, &order.UserId, &order.Status); err != nil {
+		return domain.Order{}, fmt.Errorf("exec query orders.ListOrder: %s", err)
 	}
 
-	return ConvertOrder(result[0]), nil
-}
-
-func ConvertOrder(orderSchema schema.Order) domain.Order {
-	return domain.Order{
-		Status: ConvStatusSchemaDomain(orderSchema.Status),
-		User:   orderSchema.UserId,
-	}
+	return converter.ConvOrderSchemaDomain(order), nil
 }

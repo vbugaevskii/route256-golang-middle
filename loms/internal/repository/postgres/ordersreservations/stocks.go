@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/schema"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/georgysavva/scany/pgxscan"
 )
 
-func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksItem, error) {
+func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.OrdersReservationsItem, error) {
 	query := sq.
 		Select(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -32,18 +33,5 @@ func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksIte
 		return nil, fmt.Errorf("exec query for orders_reservations.Stocks: %s", err)
 	}
 
-	return ConvertStocksItems(result), nil
-}
-
-func ConvertStocksItems(itemsSchema []schema.OrdersReservationsItem) []domain.StocksItem {
-	itemsDomain := make([]domain.StocksItem, 0, len(itemsSchema))
-
-	for _, item := range itemsSchema {
-		itemsDomain = append(itemsDomain, domain.StocksItem{
-			WarehouseId: item.WarehouseId,
-			Count:       item.Count,
-		})
-	}
-
-	return itemsDomain
+	return converter.ConvOrdersReservationsSchemaDomain(result), nil
 }

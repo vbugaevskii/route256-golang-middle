@@ -18,8 +18,8 @@ type OrdersRepository interface {
 }
 
 type OrdersReservationsRepository interface {
-	ListOrder(ctx context.Context, orderId int64) ([]OrderItem, error)
-	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
+	ListOrder(ctx context.Context, orderId int64) ([]OrdersReservationsItem, error)
+	Stocks(ctx context.Context, sku uint32) ([]OrdersReservationsItem, error)
 	CreateOrder(ctx context.Context, orderId int64, items []OrdersReservationsItem) error
 	CancelOrder(ctx context.Context, orderId int64) error
 }
@@ -69,9 +69,22 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 		return Order{}, err
 	}
 
-	order.Items, err = m.reservations.ListOrder(ctx, orderId)
+	itemsReserved, err := m.reservations.ListOrder(ctx, orderId)
 	if err != nil {
 		return Order{}, err
+	}
+
+	itemsReserveredMap := make(map[uint32]uint16)
+	for _, item := range itemsReserved {
+		itemsReserveredMap[item.Sku] += item.Count
+	}
+
+	order.Items = make([]OrderItem, 0, len(itemsReserveredMap))
+	for sku, count := range itemsReserveredMap {
+		order.Items = append(order.Items, OrderItem{
+			Sku:   sku,
+			Count: int32(count),
+		})
 	}
 
 	return order, nil
