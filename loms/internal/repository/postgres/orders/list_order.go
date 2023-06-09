@@ -28,7 +28,7 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 	var result []schema.Order
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return domain.Order{}, fmt.Errorf("exec query orders.ListOrder: %s", err)
+		return domain.Order{}, fmt.Errorf("exec query for filter: %s", err)
 	}
 	if len(result) == 0 {
 		return domain.Order{}, fmt.Errorf("order not found")
