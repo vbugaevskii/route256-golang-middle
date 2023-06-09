@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"route256/loms/internal/api"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/schema"
 
@@ -29,33 +28,18 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 	var result []schema.Order
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return domain.Order{}, fmt.Errorf("exec query for filter: %s", err)
+		return domain.Order{}, fmt.Errorf("exec query orders.ListOrder: %s", err)
 	}
 	if len(result) == 0 {
-		return domain.Order{}, api.ErrOrderNotFound
+		return domain.Order{}, fmt.Errorf("order not found")
 	}
 
 	return ConvertOrder(result[0]), nil
 }
 
 func ConvertOrder(orderSchema schema.Order) domain.Order {
-	var status api.StatusType
-
-	switch orderSchema.Status {
-	case schema.New:
-		status = api.New
-	case schema.AwaitingPayment:
-		status = api.AwaitingPayment
-	case schema.Failed:
-		status = api.Failed
-	case schema.Payed:
-		status = api.Payed
-	case schema.Cancelled:
-		status = api.Cancelled
-	}
-
 	return domain.Order{
-		Status: string(status),
+		Status: ConvStatusSchemaDomain(orderSchema.Status),
 		User:   orderSchema.UserId,
 	}
 }

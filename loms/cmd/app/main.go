@@ -9,7 +9,7 @@ import (
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/postgres/orders"
-	reserves "route256/loms/internal/repository/postgres/ordersreservations"
+	"route256/loms/internal/repository/postgres/ordersreservations"
 	"route256/loms/internal/repository/postgres/stocks"
 	"route256/loms/pkg/loms"
 	"strconv"
@@ -36,10 +36,10 @@ func main() {
 	}
 	defer pool.Close()
 
-	model := domain.New(
+	model := domain.NewModel(
 		stocks.NewStocksRepository(pool),
 		orders.NewOrdersRepository(pool),
-		reserves.NewOrdersReservationsRepository(pool),
+		ordersreservations.NewOrdersReservationsRepository(pool),
 	)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))

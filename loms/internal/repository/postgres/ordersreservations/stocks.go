@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"route256/loms/internal/api"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/schema"
 
@@ -30,10 +29,7 @@ func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksIte
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query for filter: %s", err)
-	}
-	if len(result) == 0 {
-		return nil, api.ErrOrderNotFound
+		return nil, fmt.Errorf("exec query for orders_reservations.Stocks: %s", err)
 	}
 
 	return ConvertStocksItems(result), nil

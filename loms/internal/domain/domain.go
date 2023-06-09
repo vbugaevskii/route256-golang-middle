@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
+	"log"
 )
 
 type StocksRepository interface {
@@ -11,11 +12,14 @@ type StocksRepository interface {
 
 type OrdersRepository interface {
 	ListOrder(ctx context.Context, orderId int64) (Order, error)
+	CreateOrder(ctx context.Context, userId int64) (int64, error)
+	UpdateOrder(ctx context.Context, orderId int64, status StatusType) error
 }
 
 type OrdersReservationsRepository interface {
 	ListOrder(ctx context.Context, orderId int64) ([]OrderItem, error)
 	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
+	CreateOrder(ctx context.Context, orderId int64, items []OrdersReservationsItem) error
 }
 
 type Model struct {
@@ -24,7 +28,7 @@ type Model struct {
 	reservations OrdersReservationsRepository
 }
 
-func New(
+func NewModel(
 	stocks StocksRepository,
 	orders OrdersRepository,
 	reservations OrdersReservationsRepository,
@@ -41,8 +45,18 @@ type OrderItem struct {
 	Count int32
 }
 
+type StatusType string
+
+const (
+	New             StatusType = "new"
+	AwaitingPayment StatusType = "awaiting payment"
+	Failed          StatusType = "failed"
+	Payed           StatusType = "payed"
+	Cancelled       StatusType = "cancelled"
+)
+
 type Order struct {
-	Status string
+	Status StatusType
 	User   int64
 	Items  []OrderItem
 }
@@ -67,9 +81,8 @@ type StocksItem struct {
 }
 
 func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
-	// FIXME: Don't take into account reserved items
-
 	stocksResevered, err := m.reservations.Stocks(ctx, sku)
+	log.Printf("OrdersReservations.Stocks: %+v\n", stocksResevered)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +93,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 	}
 
 	stocks, err := m.stocks.Stocks(ctx, sku)
+	log.Printf("Stocks.Stocks: %+v\n", stocks)
 	if err != nil {
 		return nil, err
 	}
@@ -94,4 +108,70 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 	}
 
 	return stocks, nil
+}
+
+type OrdersReservationsItem struct {
+	WarehouseId int64
+	Sku         uint32
+	Count       uint16
+}
+
+func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem) (int64, error) {
+	orderId, err := m.orders.CreateOrder(ctx, userId)
+	log.Printf("Orders.CreateOrder: %+v\n", orderId)
+	if err != nil {
+		return orderId, err
+	}
+
+	defer func() {
+		if err != nil {
+			m.orders.UpdateOrder(ctx, orderId, Failed)
+		}
+	}()
+
+	itemsReservered := make([]OrdersReservationsItem, 0, len(items))
+	for _, item := range items {
+		var stocks []StocksItem // to make defer work
+
+		stocks, err = m.stocks.Stocks(ctx, item.Sku)
+		log.Printf("Stocks.Stocks: %+v\n", stocks)
+		if err != nil {
+			return orderId, err
+		}
+
+		countLeft := uint16(item.Count)
+		for _, stock := range stocks {
+			if countLeft == 0 {
+				break
+			}
+
+			var countAdded uint16
+
+			if countLeft > stock.Count {
+				countAdded = stock.Count
+				countLeft -= stock.Count
+			} else {
+				countAdded = countLeft
+				countLeft = 0
+			}
+
+			itemsReservered = append(itemsReservered, OrdersReservationsItem{
+				WarehouseId: stock.WarehouseId,
+				Sku:         item.Sku,
+				Count:       countAdded,
+			})
+		}
+
+		if countLeft > 0 {
+			err = fmt.Errorf("insufficent stocks; sku = %d", item.Sku)
+			return orderId, err
+		}
+	}
+
+	err = m.reservations.CreateOrder(ctx, orderId, itemsReservered)
+	if err != nil {
+		return orderId, err
+	}
+
+	return orderId, nil
 }
