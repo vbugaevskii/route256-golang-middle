@@ -10,7 +10,7 @@ import (
 
 func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	query := sq.
-		Insert(TableNameCartItems).
+		Insert(TableName).
 		Columns("user_id", "sku", "count").
 		Values(user, sku, count).
 		Suffix("ON CONFLICT (user_id, sku) DO UPDATE SET count = EXCLUDED.count")

@@ -12,4 +12,4 @@ func NewOrdersRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const TableNameOrders = "orders"
+const TableName = "orders"

@@ -14,7 +14,7 @@ import (
 func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksItem, error) {
 	query := sq.
 		Select("order_id", "warehouse_id", "sku", "count").
-		From(TableNameOrdersReservations).
+		From(TableName).
 		Where(sq.Eq{"sku": sku}).
 		Where(sq.Gt{"count": 0})
 

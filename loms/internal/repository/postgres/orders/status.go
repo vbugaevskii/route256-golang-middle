@@ -50,7 +50,7 @@ func ConvStatusSchemaDomain(statusSchema schema.StatusType) domain.StatusType {
 
 func (r *Repository) SetOrderStatus(ctx context.Context, orderId int64, status domain.StatusType) error {
 	query := sq.
-		Update(TableNameOrders).
+		Update(TableName).
 		Set("status", ConvStatusDomainSchema(status)).
 		Where(sq.Eq{"order_id": orderId})
 

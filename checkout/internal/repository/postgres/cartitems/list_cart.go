@@ -14,7 +14,7 @@ import (
 func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartItem, error) {
 	query := sq.
 		Select("user_id", "sku", "count").
-		From(TableNameCartItems).
+		From(TableName).
 		Where(sq.Eq{"user_id": user}).
 		Where(sq.Gt{"count": 0})
 

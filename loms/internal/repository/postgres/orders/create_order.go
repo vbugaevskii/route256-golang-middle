@@ -11,7 +11,7 @@ import (
 
 func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, error) {
 	query := sq.
-		Insert(TableNameOrders).
+		Insert(TableName).
 		Columns("user_id", "status").
 		Values(userId, schema.New).
 		Suffix(fmt.Sprintf("RETURNING %s", "order_id"))
