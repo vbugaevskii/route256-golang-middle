@@ -11,7 +11,7 @@ import (
 func (r *Repository) CreateOrder(ctx context.Context, orderId int64, items []domain.OrdersReservationsItem) error {
 	query := sq.
 		Insert(TableName).
-		Columns("order_id", "warehouse_id", "sku", "count")
+		Columns(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount)
 
 	for _, item := range items {
 		query = query.Values(

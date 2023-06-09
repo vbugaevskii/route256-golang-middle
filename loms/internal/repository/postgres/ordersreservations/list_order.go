@@ -13,9 +13,9 @@ import (
 
 func (r *Repository) ListOrder(ctx context.Context, orderId int64) ([]domain.OrderItem, error) {
 	query := sq.
-		Select("order_id", "warehouse_id", "sku", "count").
+		Select(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
-		Where(sq.Eq{"order_id": orderId})
+		Where(sq.Eq{ColumnOrderId: orderId})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
