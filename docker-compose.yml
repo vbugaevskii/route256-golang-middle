@@ -47,8 +47,22 @@ services:
     volumes:
       - checkout_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - net
+
+  checkout-pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+       - DB_USER=postgres
+       - DB_PASSWORD=password
+       - DB_HOST=checkout-postgres-db
+       - DB_NAME=checkout
+       - POOL_MODE=transaction
+       - AUTH_TYPE=plain
     ports:
-      - 5433:5432
+      - "5433:5432"
+    depends_on:
+      - checkout-postgres-db
     networks:
       - net
 
@@ -61,7 +75,21 @@ services:
     volumes:
       - loms_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    networks:
+      - net
+
+  loms-pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+       - DB_USER=postgres
+       - DB_PASSWORD=password
+       - DB_HOST=loms-postgres-db
+       - DB_NAME=loms
+       - POOL_MODE=transaction
+       - AUTH_TYPE=plain
     ports:
-      - 5434:5432
+      - "5434:5432"
+    depends_on:
+      - loms-postgres-db
     networks:
       - net

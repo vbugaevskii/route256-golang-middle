@@ -37,7 +37,7 @@
 7. [ ] В одном из сервисов сделать транзакционность запросов (как на воркшопе).
 
 Задание на алмазик:
-1. Для каждой БД полнять свой балансировщик (pgbouncer или odyssey, можно и то и то). Сервисы ходят не на прямую в БД, а через балансировщик
+1. [x] Для каждой БД полнять свой балансировщик (pgbouncer или odyssey, можно и то и то). Сервисы ходят не на прямую в БД, а через балансировщик
 
 *Дедлайн: 10 июня, 23:59 (сдача) / 13 июня, 23:59 (проверка)*
 
@@ -91,6 +91,8 @@ goose create init sql
 ```bash
 set -x
 
+grpcurl -plaintext -d '{"sku": 773587830}' localhost:8081 loms.Loms/Stocks # OK
+
 grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # OK
 grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
 grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # ERROR
@@ -113,4 +115,6 @@ grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder # OK
 
 grpcurl -plaintext -d '{"user": 2}' localhost:8080 checkout.Checkout/Purchase # ERROR -> orderId=3
 grpcurl -plaintext -d '{"orderID": 3}' localhost:8081 loms.Loms/ListOrder # OK
+
+grpcurl -plaintext -d '{"sku": 773587830}' localhost:8081 loms.Loms/Stocks # OK
 ```
