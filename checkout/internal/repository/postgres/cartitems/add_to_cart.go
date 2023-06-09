@@ -11,9 +11,12 @@ import (
 func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	query := sq.
 		Insert(TableName).
-		Columns("user_id", "sku", "count").
+		Columns(ColumnUserId, ColumnSKU, ColumnCount).
 		Values(user, sku, count).
-		Suffix("ON CONFLICT (user_id, sku) DO UPDATE SET count = EXCLUDED.count")
+		Suffix(fmt.Sprintf(
+			"ON CONFLICT (%s, %s) DO UPDATE SET %s = EXCLUDED.%s",
+			ColumnUserId, ColumnSKU, ColumnCount, ColumnCount,
+		))
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

@@ -13,10 +13,10 @@ import (
 
 func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartItem, error) {
 	query := sq.
-		Select("user_id", "sku", "count").
+		Select(ColumnUserId, ColumnSKU, ColumnCount).
 		From(TableName).
-		Where(sq.Eq{"user_id": user}).
-		Where(sq.Gt{"count": 0})
+		Where(sq.Eq{ColumnUserId: user}).
+		Where(sq.Gt{ColumnCount: 0})
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

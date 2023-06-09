@@ -12,4 +12,10 @@ func NewCartItemsRepository(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-const TableName = "cart_items"
+const (
+	TableName = "cart_items"
+
+	ColumnUserId = "user_id"
+	ColumnSKU    = "sku"
+	ColumnCount  = "count"
+)
