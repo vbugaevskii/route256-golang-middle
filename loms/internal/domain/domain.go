@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 type StocksRepository interface {
 	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
@@ -12,6 +15,7 @@ type OrdersRepository interface {
 
 type OrdersReservationsRepository interface {
 	ListOrder(ctx context.Context, orderId int64) ([]OrderItem, error)
+	Stocks(ctx context.Context, sku uint32) ([]StocksItem, error)
 }
 
 type Model struct {
@@ -59,10 +63,35 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 
 type StocksItem struct {
 	WarehouseId int64
-	SKU         uint32
 	Count       uint16
 }
 
 func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
-	return m.stocks.Stocks(ctx, sku)
+	// FIXME: Don't take into account reserved items
+
+	stocksResevered, err := m.reservations.Stocks(ctx, sku)
+	if err != nil {
+		return nil, err
+	}
+
+	stocksReseveredMap := make(map[int64]uint16)
+	for _, item := range stocksResevered {
+		stocksReseveredMap[item.WarehouseId] += item.Count
+	}
+
+	stocks, err := m.stocks.Stocks(ctx, sku)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, item := range stocks {
+		if cnt, exists := stocksReseveredMap[item.WarehouseId]; exists {
+			if item.Count < cnt {
+				return nil, fmt.Errorf("incosistent stocks for sku=%d and warehouse_id=%d", sku, item.WarehouseId)
+			}
+			item.Count -= cnt
+		}
+	}
+
+	return stocks, nil
 }
