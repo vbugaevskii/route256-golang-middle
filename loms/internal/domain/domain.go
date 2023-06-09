@@ -50,11 +50,11 @@ type OrderItem struct {
 type StatusType string
 
 const (
-	New             StatusType = "new"
-	AwaitingPayment StatusType = "awaiting payment"
-	Failed          StatusType = "failed"
-	Payed           StatusType = "payed"
-	Cancelled       StatusType = "cancelled"
+	StatusNew             StatusType = "new"
+	StatusAwaitingPayment StatusType = "awaiting payment"
+	StatusFailed          StatusType = "failed"
+	StatusPayed           StatusType = "payed"
+	StatusCancelled       StatusType = "cancelled"
 )
 
 type Order struct {
@@ -140,9 +140,9 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 	defer func() {
 		if err != nil {
-			m.orders.UpdateOrderStatus(ctx, orderId, Failed)
+			m.orders.UpdateOrderStatus(ctx, orderId, StatusFailed)
 		} else {
-			m.orders.UpdateOrderStatus(ctx, orderId, AwaitingPayment)
+			m.orders.UpdateOrderStatus(ctx, orderId, StatusAwaitingPayment)
 		}
 	}()
 
@@ -201,7 +201,7 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 		return err
 	}
 
-	err = m.orders.UpdateOrderStatus(ctx, orderId, Cancelled)
+	err = m.orders.UpdateOrderStatus(ctx, orderId, StatusCancelled)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 		}
 	}
 
-	err = m.orders.UpdateOrderStatus(ctx, orderId, Payed)
+	err = m.orders.UpdateOrderStatus(ctx, orderId, StatusPayed)
 	if err != nil {
 		return err
 	}

@@ -3,11 +3,11 @@ package schema
 type StatusType string
 
 const (
-	New             StatusType = "New"
-	AwaitingPayment StatusType = "AwaitingPayment"
-	Failed          StatusType = "Failed"
-	Payed           StatusType = "Payed"
-	Cancelled       StatusType = "Cancelled"
+	StatusNew             StatusType = "New"
+	StatusAwaitingPayment StatusType = "AwaitingPayment"
+	StatusFailed          StatusType = "Failed"
+	StatusPayed           StatusType = "Payed"
+	StatusCancelled       StatusType = "Cancelled"
 )
 
 type Order struct {

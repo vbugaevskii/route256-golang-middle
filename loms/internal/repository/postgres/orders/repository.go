@@ -57,7 +57,7 @@ func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, erro
 	query := sq.
 		Insert(TableName).
 		Columns(ColumnUserId, ColumnStatus).
-		Values(userId, schema.New).
+		Values(userId, schema.StatusNew).
 		Suffix(fmt.Sprintf("RETURNING %s", ColumnOrderId))
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
