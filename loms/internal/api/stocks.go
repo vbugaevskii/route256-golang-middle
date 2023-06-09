@@ -9,14 +9,18 @@ import (
 func (s *Service) Stocks(ctx context.Context, req *loms.RequestStocks) (*loms.ResponseStocks, error) {
 	log.Printf("%+v", req)
 
-	_, _ = s.model.Stocks(ctx, req.Sku)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	stocks, err := s.model.Stocks(ctx, req.Sku)
+	if err != nil {
+		return nil, err
+	}
 
-	return &loms.ResponseStocks{
-		Stocks: []*loms.ResponseStocks_StockItem{
-			{WarehouseID: 1, Count: 200},
-		},
-	}, nil
+	result := make([]*loms.ResponseStocks_StockItem, 0, len(stocks))
+	for _, item := range stocks {
+		result = append(result, &loms.ResponseStocks_StockItem{
+			WarehouseID: item.WarehouseId,
+			Count:       uint64(item.Count),
+		})
+	}
+
+	return &loms.ResponseStocks{Stocks: result}, nil
 }
