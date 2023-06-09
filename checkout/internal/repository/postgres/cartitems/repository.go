@@ -44,7 +44,7 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query cart_items.AddToCart: %s", err)
+		return fmt.Errorf("build query AddToCart: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)
@@ -52,7 +52,7 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return err
+		return fmt.Errorf("exec query AddToCart: %s", err)
 	}
 
 	return nil
@@ -67,7 +67,7 @@ func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartIte
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query for filter: %s", err)
+		return nil, fmt.Errorf("build query ListCart: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)
@@ -76,7 +76,28 @@ func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartIte
 	var result []schema.CartItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query for filter: %s", err)
+		return nil, fmt.Errorf("exec query ListCart: %s", err)
 	}
 	return converter.ConvCartItemsSchemaDomain(result), nil
+}
+
+func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
+	query := sq.
+		Delete(TableName).
+		Where(sq.Eq{ColumnUserId: user})
+
+	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("build query DeleteCart: %s", err)
+	}
+
+	log.Printf("SQL: %s\n", queryRaw)
+	log.Printf("SQL: %+v\n", queryArgs)
+
+	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	if err != nil {
+		return fmt.Errorf("exec query for DeleteCart: %s", err)
+	}
+
+	return nil
 }

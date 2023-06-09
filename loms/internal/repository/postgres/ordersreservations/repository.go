@@ -78,7 +78,7 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return err
+		return fmt.Errorf("exec query for InsertOrderReservations: %s", err)
 	}
 
 	return nil
@@ -123,7 +123,7 @@ func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return err
+		return fmt.Errorf("exec query for DeleteOrderReservations: %s", err)
 	}
 
 	return nil

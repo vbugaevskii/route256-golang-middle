@@ -85,3 +85,32 @@ grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase
 # создать миграцию init
 goose create init sql
 ```
+
+Ручное тестирование:
+
+```bash
+set -x
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # ERROR
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 1}' localhost:8080 checkout.Checkout/DeleteFromCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773596051, "count": 3}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase # OK -> orderId=2
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # ERROR
+grpcurl -plaintext -d '{"orderID": 2}' localhost:8081 loms.Loms/ListOrder # OK
+
+grpcurl -plaintext -d '{"user": 2, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 2}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"orderID": 2}' localhost:8081 loms.Loms/OrderPayed # OK
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder # OK
+
+grpcurl -plaintext -d '{"user": 2}' localhost:8080 checkout.Checkout/Purchase # ERROR -> orderId=3
+grpcurl -plaintext -d '{"orderID": 3}' localhost:8081 loms.Loms/ListOrder # OK
+```

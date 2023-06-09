@@ -21,6 +21,7 @@ type ProductClient interface {
 type CartItemsRepository interface {
 	ListCart(ctx context.Context, user int64) ([]CartItem, error)
 	AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error
+	DeleteCart(ctx context.Context, user int64) error
 }
 
 type Model struct {
@@ -76,6 +77,11 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 		return 0, err
 	}
 
+	err = m.cartItems.DeleteCart(ctx, user)
+	if err != nil {
+		return 0, err
+	}
+
 	items := make([]cliloms.RequestCreateOrderItem, 0, len(cart))
 	for _, item := range cart {
 		items = append(items, cliloms.RequestCreateOrderItem{
@@ -113,15 +119,16 @@ func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uin
 		return err
 	}
 
+	countTotalMax := uint64(count + countInCart)
 	var countTotal uint64
 	for _, stock := range stocks.Stocks {
 		countTotal += stock.Count
-		if countTotal >= uint64(count+countInCart) {
+		if countTotal >= countTotalMax {
 			break
 		}
 	}
 
-	if countTotal < uint64(count) {
+	if countTotal < countTotalMax {
 		return ErrProductInsufficient
 	}
 
@@ -147,6 +154,8 @@ func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, coun
 		}
 	}
 
+	// If count to be deleted is greater than count in cart, it's OK
+	// We will remove all items from the cart
 	if countInCart < count {
 		countInCart = 0
 	} else {
