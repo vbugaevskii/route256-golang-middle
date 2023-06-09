@@ -53,3 +53,22 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 
 	return converter.ConvStocksItemsSchemaDomain(result), nil
 }
+
+func (r *Repository) RemoveStocks(ctx context.Context, sku uint32, item domain.StocksItem) error {
+	query := sq.
+		Update(TableName).
+		Set(ColumnCount, sq.ConcatExpr(ColumnSKU, sq.Expr(" - ?", item.Count))).
+		Where(sq.Eq{ColumnSKU: sku, ColumnWarehouseId: item.WarehouseId})
+
+	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("build query orders_reservations.CancelOrder: %s", err)
+	}
+
+	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

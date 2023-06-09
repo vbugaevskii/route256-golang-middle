@@ -8,7 +8,7 @@ import (
 
 type StocksRepository interface {
 	ListStocks(ctx context.Context, sku uint32) ([]StocksItem, error)
-	// OrderPayed(ctx context.Context, sku uint32, stocks []StocksItem) error
+	RemoveStocks(ctx context.Context, sku uint32, item StocksItem) error
 }
 
 type OrdersRepository interface {
@@ -97,7 +97,7 @@ type StocksItem struct {
 
 func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 	stocksResevered, err := m.reservations.ListSkuReservations(ctx, sku)
-	log.Printf("OrdersReservations.Stocks: %+v\n", stocksResevered)
+	log.Printf("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 	}
 
 	stocks, err := m.stocks.ListStocks(ctx, sku)
-	log.Printf("Stocks.Stocks: %+v\n", stocks)
+	log.Printf("Stocks.ListStocks: %+v\n", stocks)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		var stocks []StocksItem // to make defer work
 
 		stocks, err = m.stocks.ListStocks(ctx, item.Sku)
-		log.Printf("Stocks.Stocks: %+v\n", stocks)
+		log.Printf("Stocks.ListStocks: %+v\n", stocks)
 		if err != nil {
 			return orderId, err
 		}
@@ -202,6 +202,36 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	}
 
 	err = m.orders.UpdateOrderStatus(ctx, orderId, Cancelled)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
+	itemsReserved, err := m.reservations.ListOrderReservations(ctx, orderId)
+	log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+	if err != nil {
+		return err
+	}
+
+	err = m.reservations.DeleteOrderReservations(ctx, orderId)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range itemsReserved {
+		err = m.stocks.RemoveStocks(ctx, item.Sku, StocksItem{
+			WarehouseId: item.WarehouseId,
+			Count:       item.Count,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = m.orders.UpdateOrderStatus(ctx, orderId, Payed)
 	if err != nil {
 		return err
 	}
