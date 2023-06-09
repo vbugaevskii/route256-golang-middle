@@ -21,7 +21,7 @@ func (r *Repository) Stocks(ctx context.Context, sku uint32) ([]domain.StocksIte
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query for filter: %s", err)
+		return nil, fmt.Errorf("build query stocks.Stocks: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)

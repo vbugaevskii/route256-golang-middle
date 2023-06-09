@@ -20,7 +20,7 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return domain.Order{}, fmt.Errorf("build query for filter: %s", err)
+		return domain.Order{}, fmt.Errorf("build query orders.ListOrder: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)

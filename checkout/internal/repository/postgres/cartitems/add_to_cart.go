@@ -17,7 +17,7 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query for filter: %s", err)
+		return fmt.Errorf("build query cart_items.AddToCart: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)
