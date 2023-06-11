@@ -8,17 +8,18 @@ import (
 	"log"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
+	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	tx.Manager
 }
 
 func NewOrdersRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+	return &Repository{tx.Manager{Pool: pool}}
 }
 
 const (
@@ -43,7 +44,7 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	row := r.pool.QueryRow(ctx, queryRaw, queryArgs...)
+	row := r.GetQuerier(ctx).QueryRow(ctx, queryRaw, queryArgs...)
 
 	var order schema.Order
 	if err := row.Scan(&order.OrderId, &order.UserId, &order.Status); err != nil {
@@ -68,7 +69,7 @@ func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, erro
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	row := r.pool.QueryRow(ctx, queryRaw, queryArgs...)
+	row := r.GetQuerier(ctx).QueryRow(ctx, queryRaw, queryArgs...)
 
 	var orderId int64
 	if err := row.Scan(&orderId); err != nil {
@@ -92,7 +93,7 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, statu
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
 		return fmt.Errorf("exec query orders.SetOrderStatus: %s", err)
 	}

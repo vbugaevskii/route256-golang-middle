@@ -8,6 +8,7 @@ import (
 	"log"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
+	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
@@ -15,11 +16,11 @@ import (
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	tx.Manager
 }
 
 func NewStocksRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+	return &Repository{tx.Manager{Pool: pool}}
 }
 
 const (
@@ -46,7 +47,7 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 	log.Printf("SQL: %+v\n", queryArgs)
 
 	var result []schema.StocksItem
-	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
+	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("exec query stocks.Stocks: %s", err)
 	}
@@ -65,7 +66,7 @@ func (r *Repository) RemoveStocks(ctx context.Context, sku uint32, item domain.S
 		return fmt.Errorf("build query orders_reservations.CancelOrder: %s", err)
 	}
 
-	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 	"log"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
+	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
@@ -15,11 +16,11 @@ import (
 )
 
 type Repository struct {
-	pool *pgxpool.Pool
+	tx.Manager
 }
 
 func NewOrdersReservationsRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{pool: pool}
+	return &Repository{tx.Manager{Pool: pool}}
 }
 
 const (
@@ -46,7 +47,7 @@ func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) (
 	log.Printf("SQL: %+v\n", queryArgs)
 
 	var result []schema.OrdersReservationsItem
-	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
+	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("exec query ListOrderReservations: %s", err)
 	}
@@ -76,7 +77,7 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
 		return fmt.Errorf("exec query for InsertOrderReservations: %s", err)
 	}
@@ -100,7 +101,7 @@ func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]dom
 	log.Printf("SQL: %+v\n", queryArgs)
 
 	var result []schema.OrdersReservationsItem
-	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
+	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
 		return nil, fmt.Errorf("exec query for ListSkuReservations: %s", err)
 	}
@@ -121,7 +122,7 @@ func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64)
 	log.Printf("SQL: %s\n", queryRaw)
 	log.Printf("SQL: %+v\n", queryArgs)
 
-	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
 		return fmt.Errorf("exec query for DeleteOrderReservations: %s", err)
 	}

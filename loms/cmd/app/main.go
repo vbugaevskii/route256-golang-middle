@@ -11,6 +11,7 @@ import (
 	"route256/loms/internal/repository/postgres/orders"
 	"route256/loms/internal/repository/postgres/ordersreservations"
 	"route256/loms/internal/repository/postgres/stocks"
+	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/pkg/loms"
 	"strconv"
 
@@ -37,6 +38,7 @@ func main() {
 	defer pool.Close()
 
 	model := domain.NewModel(
+		tx.NewTxManager(pool),
 		stocks.NewStocksRepository(pool),
 		orders.NewOrdersRepository(pool),
 		ordersreservations.NewOrdersReservationsRepository(pool),

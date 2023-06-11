@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"route256/loms/internal/repository/postgres/tx"
 )
 
 type StocksRepository interface {
@@ -25,17 +26,21 @@ type OrdersReservationsRepository interface {
 }
 
 type Model struct {
+	txManager *tx.Manager
+
 	stocks       StocksRepository
 	orders       OrdersRepository
 	reservations OrdersReservationsRepository
 }
 
 func NewModel(
+	txManager *tx.Manager,
 	stocks StocksRepository,
 	orders OrdersRepository,
 	reservations OrdersReservationsRepository,
 ) *Model {
 	return &Model{
+		txManager:    txManager,
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
@@ -64,27 +69,44 @@ type Order struct {
 }
 
 func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
-	order, err := m.orders.ListOrder(ctx, orderId)
+	var order Order
+
+	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+		var (
+			itemsReserved []OrdersReservationsItem
+			err           error
+		)
+
+		order, err = m.orders.ListOrder(ctx, orderId)
+		log.Printf("Orders.ListOrder: %+v\n", order)
+		if err != nil {
+			return err
+		}
+
+		itemsReserved, err = m.reservations.ListOrderReservations(ctx, orderId)
+		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+		if err != nil {
+			return err
+		}
+
+		itemsReserveredMap := make(map[uint32]uint16)
+		for _, item := range itemsReserved {
+			itemsReserveredMap[item.Sku] += item.Count
+		}
+
+		order.Items = make([]OrderItem, 0, len(itemsReserveredMap))
+		for sku, count := range itemsReserveredMap {
+			order.Items = append(order.Items, OrderItem{
+				Sku:   sku,
+				Count: int32(count),
+			})
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return Order{}, err
-	}
-
-	itemsReserved, err := m.reservations.ListOrderReservations(ctx, orderId)
-	if err != nil {
-		return Order{}, err
-	}
-
-	itemsReserveredMap := make(map[uint32]uint16)
-	for _, item := range itemsReserved {
-		itemsReserveredMap[item.Sku] += item.Count
-	}
-
-	order.Items = make([]OrderItem, 0, len(itemsReserveredMap))
-	for sku, count := range itemsReserveredMap {
-		order.Items = append(order.Items, OrderItem{
-			Sku:   sku,
-			Count: int32(count),
-		})
 	}
 
 	return order, nil
@@ -96,30 +118,46 @@ type StocksItem struct {
 }
 
 func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
-	stocksResevered, err := m.reservations.ListSkuReservations(ctx, sku)
-	log.Printf("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
-	if err != nil {
-		return nil, err
-	}
+	var stocks []StocksItem
 
-	stocksReseveredMap := make(map[int64]uint16)
-	for _, item := range stocksResevered {
-		stocksReseveredMap[item.WarehouseId] += item.Count
-	}
+	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+		var (
+			stocksResevered []OrdersReservationsItem
+			err             error
+		)
 
-	stocks, err := m.stocks.ListStocks(ctx, sku)
-	log.Printf("Stocks.ListStocks: %+v\n", stocks)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, item := range stocks {
-		if cnt, exists := stocksReseveredMap[item.WarehouseId]; exists {
-			if item.Count < cnt {
-				return nil, fmt.Errorf("incosistent stocks for sku=%d and warehouse_id=%d", sku, item.WarehouseId)
-			}
-			item.Count -= cnt
+		stocksResevered, err = m.reservations.ListSkuReservations(ctxTx, sku)
+		log.Printf("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
+		if err != nil {
+			return err
 		}
+
+		stocksReseveredMap := make(map[int64]uint16)
+		for _, item := range stocksResevered {
+			stocksReseveredMap[item.WarehouseId] += item.Count
+		}
+
+		stocks, err = m.stocks.ListStocks(ctxTx, sku)
+		log.Printf("Stocks.ListStocks: %+v\n", stocks)
+		if err != nil {
+			return err
+		}
+
+		for i, item := range stocks {
+			if cnt, exists := stocksReseveredMap[item.WarehouseId]; exists {
+				if item.Count < cnt {
+					return fmt.Errorf("incosistent stocks for sku=%d and warehouse_id=%d", sku, item.WarehouseId)
+				}
+				stocks[i].Count -= cnt
+			}
+		}
+		log.Printf("Stocks.ListStocks: %+v\n modified", stocks)
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
 	}
 
 	return stocks, nil
@@ -132,60 +170,72 @@ type OrdersReservationsItem struct {
 }
 
 func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem) (int64, error) {
-	orderId, err := m.orders.CreateOrder(ctx, userId)
-	log.Printf("Orders.CreateOrder: %+v\n", orderId)
-	if err != nil {
-		return orderId, err
-	}
+	var orderId int64
 
-	defer func() {
+	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+		var err error
+
+		orderId, err = m.orders.CreateOrder(ctxTx, userId)
+		log.Printf("Orders.CreateOrder: %+v\n", orderId)
 		if err != nil {
-			m.orders.UpdateOrderStatus(ctx, orderId, StatusFailed)
-		} else {
-			m.orders.UpdateOrderStatus(ctx, orderId, StatusAwaitingPayment)
-		}
-	}()
-
-	itemsReservered := make([]OrdersReservationsItem, 0, len(items))
-	for _, item := range items {
-		var stocks []StocksItem // to make defer work
-
-		stocks, err = m.stocks.ListStocks(ctx, item.Sku)
-		log.Printf("Stocks.ListStocks: %+v\n", stocks)
-		if err != nil {
-			return orderId, err
+			return err
 		}
 
-		countLeft := uint16(item.Count)
-		for _, stock := range stocks {
-			if countLeft == 0 {
-				break
-			}
-
-			var countAdded uint16
-
-			if countLeft > stock.Count {
-				countAdded = stock.Count
-				countLeft -= stock.Count
+		defer func() {
+			if err != nil {
+				m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed)
 			} else {
-				countAdded = countLeft
-				countLeft = 0
+				m.orders.UpdateOrderStatus(ctxTx, orderId, StatusAwaitingPayment)
+			}
+		}()
+
+		itemsReservered := make([]OrdersReservationsItem, 0, len(items))
+		for _, item := range items {
+			var stocks []StocksItem // to make defer work
+
+			stocks, err = m.stocks.ListStocks(ctxTx, item.Sku)
+			log.Printf("Stocks.ListStocks: %+v\n", stocks)
+			if err != nil {
+				return err
 			}
 
-			itemsReservered = append(itemsReservered, OrdersReservationsItem{
-				WarehouseId: stock.WarehouseId,
-				Sku:         item.Sku,
-				Count:       countAdded,
-			})
+			countLeft := uint16(item.Count)
+			for _, stock := range stocks {
+				if countLeft == 0 {
+					break
+				}
+
+				var countAdded uint16
+
+				if countLeft > stock.Count {
+					countAdded = stock.Count
+					countLeft -= stock.Count
+				} else {
+					countAdded = countLeft
+					countLeft = 0
+				}
+
+				itemsReservered = append(itemsReservered, OrdersReservationsItem{
+					WarehouseId: stock.WarehouseId,
+					Sku:         item.Sku,
+					Count:       countAdded,
+				})
+			}
+
+			if countLeft > 0 {
+				err = fmt.Errorf("insufficent stocks; sku = %d", item.Sku)
+				return err
+			}
 		}
 
-		if countLeft > 0 {
-			err = fmt.Errorf("insufficent stocks; sku = %d", item.Sku)
-			return orderId, err
+		err = m.reservations.InsertOrderReservations(ctxTx, orderId, itemsReservered)
+		if err != nil {
+			return err
 		}
-	}
 
-	err = m.reservations.InsertOrderReservations(ctx, orderId, itemsReservered)
+		return nil
+	})
+
 	if err != nil {
 		return orderId, err
 	}
@@ -194,14 +244,22 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 }
 
 func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
-	var err error
+	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+		var err error
 
-	err = m.reservations.DeleteOrderReservations(ctx, orderId)
-	if err != nil {
-		return err
-	}
+		err = m.reservations.DeleteOrderReservations(ctxTx, orderId)
+		if err != nil {
+			return err
+		}
 
-	err = m.orders.UpdateOrderStatus(ctx, orderId, StatusCancelled)
+		err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusCancelled)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return err
 	}
@@ -210,28 +268,40 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 }
 
 func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
-	itemsReserved, err := m.reservations.ListOrderReservations(ctx, orderId)
-	log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
-	if err != nil {
-		return err
-	}
+	var itemsReserved []OrdersReservationsItem
 
-	err = m.reservations.DeleteOrderReservations(ctx, orderId)
-	if err != nil {
-		return err
-	}
+	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+		var err error
 
-	for _, item := range itemsReserved {
-		err = m.stocks.RemoveStocks(ctx, item.Sku, StocksItem{
-			WarehouseId: item.WarehouseId,
-			Count:       item.Count,
-		})
+		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
+		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
 		if err != nil {
 			return err
 		}
-	}
 
-	err = m.orders.UpdateOrderStatus(ctx, orderId, StatusPayed)
+		err = m.reservations.DeleteOrderReservations(ctxTx, orderId)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range itemsReserved {
+			err = m.stocks.RemoveStocks(ctxTx, item.Sku, StocksItem{
+				WarehouseId: item.WarehouseId,
+				Count:       item.Count,
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusPayed)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return err
 	}
