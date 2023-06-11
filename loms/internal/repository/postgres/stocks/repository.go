@@ -1,8 +1,6 @@
 package stocks
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
-
 	"context"
 	"fmt"
 	"log"
@@ -13,6 +11,7 @@ import (
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Repository struct {

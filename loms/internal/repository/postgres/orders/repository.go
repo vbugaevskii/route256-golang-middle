@@ -1,8 +1,6 @@
 package orders
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
-
 	"context"
 	"fmt"
 	"log"
@@ -12,6 +10,7 @@ import (
 	"route256/loms/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Repository struct {

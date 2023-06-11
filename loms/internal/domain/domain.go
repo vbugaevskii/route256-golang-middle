@@ -183,9 +183,9 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 		defer func() {
 			if err != nil {
-				m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed)
+				_ = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed)
 			} else {
-				m.orders.UpdateOrderStatus(ctxTx, orderId, StatusAwaitingPayment)
+				_ = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusAwaitingPayment)
 			}
 		}()
 

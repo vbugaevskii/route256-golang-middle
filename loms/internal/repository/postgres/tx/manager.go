@@ -26,7 +26,9 @@ func (m *Manager) RunRepeatableRead(ctx context.Context, fn func(ctxTx context.C
 	if err != nil {
 		return fmt.Errorf("failed tx begin: %w", err)
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
 
 	ctxTx := context.WithValue(ctx, txKey, tx)
 	if err = fn(ctxTx); err != nil {

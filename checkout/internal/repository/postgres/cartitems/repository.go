@@ -1,19 +1,16 @@
 package cartitems
 
 import (
-	"github.com/jackc/pgx/v4/pgxpool"
-
 	"context"
 	"fmt"
 	"log"
-
-	sq "github.com/Masterminds/squirrel"
-
 	"route256/checkout/internal/converter"
 	"route256/checkout/internal/domain"
 	"route256/checkout/internal/repository/schema"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 type Repository struct {
