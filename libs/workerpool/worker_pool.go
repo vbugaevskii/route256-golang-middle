@@ -69,7 +69,7 @@ func (wp *WorkerPool[I, O]) execTask(inp I) TaskResult[I, O] {
 }
 
 // submit tasks to worker pool
-func (wp *WorkerPool[I, O]) Submit(inp []I) chan TaskResult[I, O] {
+func (wp *WorkerPool[I, O]) Submit(inp []I) <-chan TaskResult[I, O] {
 	go func() {
 		for _, i := range inp {
 			wp.inp <- i

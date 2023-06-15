@@ -50,6 +50,8 @@ type CartItem struct {
 	Price uint32
 }
 
+const NumProductWorkers = 5
+
 func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
 	cartItems, err := m.cartItems.ListCart(ctx, user)
 	log.Printf("CartItems.ListCart: %+v\n", cartItems)
@@ -62,7 +64,7 @@ func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
 
 	pool := wp.NewWorkerPool(
 		ctxPool,
-		5,
+		NumProductWorkers,
 		// will change cartItems inplace
 		func(item *CartItem) (struct{}, error) {
 			product, err := m.product.GetProduct(ctx, item.SKU)
