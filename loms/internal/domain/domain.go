@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"route256/loms/internal/repository/postgres/tx"
+	"time"
 )
 
 type StocksRepository interface {
@@ -31,6 +32,8 @@ type Model struct {
 	stocks       StocksRepository
 	orders       OrdersRepository
 	reservations OrdersReservationsRepository
+
+	ordersPool chan int64
 }
 
 func NewModel(
@@ -44,6 +47,7 @@ func NewModel(
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
+		ordersPool:   make(chan int64),
 	}
 }
 
@@ -240,12 +244,30 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		return orderId, err
 	}
 
+	go func() {
+		log.Printf("loms.CreateOrder set future to cancel orderId: %d\n", orderId)
+		<-time.After(10 * time.Second)
+		m.ordersPool <- orderId
+	}()
+
 	return orderId, nil
 }
 
 func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
-		var err error
+		var (
+			order Order
+			err   error
+		)
+
+		order, err = m.orders.ListOrder(ctx, orderId)
+		if err != nil {
+			return err
+		}
+
+		if order.Status != StatusAwaitingPayment {
+			return fmt.Errorf("order can be canceled cause wrong status; status = %s", order.Status)
+		}
 
 		err = m.reservations.DeleteOrderReservations(ctxTx, orderId)
 		if err != nil {
@@ -267,11 +289,35 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	return nil
 }
 
+func (m *Model) RunCancelOrderByTimeout(ctx context.Context) {
+	for {
+		select {
+		case orderId := <-m.ordersPool:
+			log.Printf("loms.RunCancelOrderByTimeout: %d\n", orderId)
+			_ = m.CancelOrder(ctx, orderId)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 	var itemsReserved []OrdersReservationsItem
 
 	err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
-		var err error
+		var (
+			order Order
+			err   error
+		)
+
+		order, err = m.orders.ListOrder(ctx, orderId)
+		if err != nil {
+			return err
+		}
+
+		if order.Status != StatusAwaitingPayment {
+			return fmt.Errorf("order can be payed cause wrong status; status = %s", order.Status)
+		}
 
 		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
 		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
