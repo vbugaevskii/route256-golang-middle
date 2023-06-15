@@ -118,3 +118,17 @@ grpcurl -plaintext -d '{"orderID": 2}' localhost:8081 loms.Loms/ListOrder # OK
 
 grpcurl -plaintext -d '{"sku": 773587830}' localhost:8081 loms.Loms/Stocks # OK
 ```
+
+Протестировать rps можно так:
+```bash
+#!/usr/bin/env sh
+
+mkdir -p answers
+
+for i in {1..5}; do
+    grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart \
+        >"answers/$i.ans" 2>&1 &
+done
+
+wait
+```

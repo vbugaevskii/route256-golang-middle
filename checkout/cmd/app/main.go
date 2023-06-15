@@ -59,6 +59,7 @@ func main() {
 		cliproduct.NewProductClient(
 			connProduct,
 			config.AppConfig.Services.ProductService.Token,
+			config.AppConfig.Services.ProductService.RPS,
 		),
 		pgcartitems.NewCartItemsRepository(pool),
 	)

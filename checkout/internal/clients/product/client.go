@@ -3,6 +3,7 @@ package product
 import (
 	"context"
 	pbproduct "route256/checkout/pkg/product"
+	"route256/libs/ratelimiter"
 
 	"google.golang.org/grpc"
 )
@@ -30,16 +31,20 @@ type ResponseListSkus struct {
 type ProductService struct {
 	token  string
 	client pbproduct.ProductServiceClient
+	rate   *ratelimiter.RateLimiter
 }
 
-func NewProductClient(con grpc.ClientConnInterface, token string) *ProductService {
+func NewProductClient(con grpc.ClientConnInterface, token string, rps int) *ProductService {
 	return &ProductService{
 		token:  token,
 		client: pbproduct.NewProductServiceClient(con),
+		rate:   ratelimiter.NewRateLimiter(rps),
 	}
 }
 
 func (cli *ProductService) GetProduct(ctx context.Context, sku uint32) (ResponseGetProduct, error) {
+	cli.rate.Aquire()
+
 	reqProto := pbproduct.RequestGetProduct{
 		Token: cli.token,
 		Sku:   sku,
@@ -58,6 +63,8 @@ func (cli *ProductService) GetProduct(ctx context.Context, sku uint32) (Response
 }
 
 func (cli *ProductService) ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (ResponseListSkus, error) {
+	cli.rate.Aquire()
+
 	reqProto := pbproduct.RequestListSkus{
 		Token:         cli.token,
 		StartAfterSku: startAfterSku,
