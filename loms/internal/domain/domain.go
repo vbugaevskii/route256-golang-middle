@@ -17,6 +17,7 @@ type OrdersRepository interface {
 	ListOrder(ctx context.Context, orderId int64) (Order, error)
 	CreateOrder(ctx context.Context, userId int64) (int64, error)
 	UpdateOrderStatus(ctx context.Context, orderId int64, status StatusType) error
+	ListOrderOutdated(ctx context.Context) ([]Order, error)
 }
 
 type OrdersReservationsRepository interface {
@@ -32,8 +33,6 @@ type Model struct {
 	stocks       StocksRepository
 	orders       OrdersRepository
 	reservations OrdersReservationsRepository
-
-	ordersPool chan int64
 }
 
 func NewModel(
@@ -47,7 +46,6 @@ func NewModel(
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
-		ordersPool:   make(chan int64),
 	}
 }
 
@@ -67,9 +65,10 @@ const (
 )
 
 type Order struct {
-	Status StatusType
-	User   int64
-	Items  []OrderItem
+	OrderId int64
+	Status  StatusType
+	User    int64
+	Items   []OrderItem
 }
 
 func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
@@ -81,13 +80,13 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 			err           error
 		)
 
-		order, err = m.orders.ListOrder(ctx, orderId)
+		order, err = m.orders.ListOrder(ctxTx, orderId)
 		log.Printf("Orders.ListOrder: %+v\n", order)
 		if err != nil {
 			return err
 		}
 
-		itemsReserved, err = m.reservations.ListOrderReservations(ctx, orderId)
+		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
 		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
 		if err != nil {
 			return err
@@ -244,12 +243,6 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		return orderId, err
 	}
 
-	go func() {
-		log.Printf("loms.CreateOrder set future to cancel orderId: %d\n", orderId)
-		<-time.After(10 * time.Second)
-		m.ordersPool <- orderId
-	}()
-
 	return orderId, nil
 }
 
@@ -260,7 +253,8 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 			err   error
 		)
 
-		order, err = m.orders.ListOrder(ctx, orderId)
+		order, err = m.orders.ListOrder(ctxTx, orderId)
+		log.Printf("Orders.ListOrder: %+v\n", order)
 		if err != nil {
 			return err
 		}
@@ -289,14 +283,42 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	return nil
 }
 
-func (m *Model) RunCancelOrderByTimeout(ctx context.Context) {
+func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
+	ticker := time.NewTicker(time.Second)
+
 	for {
 		select {
-		case orderId := <-m.ordersPool:
-			log.Printf("loms.RunCancelOrderByTimeout: %d\n", orderId)
-			_ = m.CancelOrder(ctx, orderId)
+		case <-ticker.C:
+			var orders []Order
+
+			err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
+				var err error
+
+				orders, err = m.orders.ListOrderOutdated(ctxTx)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			})
+
+			if err != nil {
+				return err
+			}
+
+			if orders == nil {
+				continue
+			}
+
+			for _, order := range orders {
+				err = m.CancelOrder(ctx, order.OrderId)
+				if err != nil {
+					return err
+				}
+			}
+
 		case <-ctx.Done():
-			return
+			return ctx.Err()
 		}
 	}
 }
@@ -310,7 +332,7 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 			err   error
 		)
 
-		order, err = m.orders.ListOrder(ctx, orderId)
+		order, err = m.orders.ListOrder(ctxTx, orderId)
 		if err != nil {
 			return err
 		}

@@ -11,7 +11,8 @@ CREATE TYPE StatusType AS ENUM (
 CREATE TABLE IF NOT EXISTS orders (
     order_id    bigserial not null PRIMARY KEY,  -- int64
     user_id     bigint not null,                 -- int64
-    status      StatusType not null
+    status      StatusType not null,
+    created_at  timestamp
 );
 -- +goose StatementEnd
 

@@ -7,7 +7,8 @@ import (
 
 func ConvOrderSchemaDomain(orderSchema schema.Order) domain.Order {
 	return domain.Order{
-		Status: ConvStatusSchemaDomain(orderSchema.Status),
-		User:   orderSchema.UserId,
+		OrderId: orderSchema.OrderId,
+		Status:  ConvStatusSchemaDomain(orderSchema.Status),
+		User:    orderSchema.UserId,
 	}
 }
