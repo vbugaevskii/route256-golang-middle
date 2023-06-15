@@ -32,7 +32,7 @@ func NewRateLimiter(rps int) *RateLimiter {
 	return &rateLim
 }
 
-func (r *RateLimiter) Aquire() {
+func (r *RateLimiter) Acquire() {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 
