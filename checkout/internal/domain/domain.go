@@ -6,6 +6,7 @@ import (
 	"log"
 	cliloms "route256/checkout/internal/clients/loms"
 	cliproduct "route256/checkout/internal/clients/product"
+	wp "route256/libs/workerpool"
 )
 
 type LomsClient interface {
@@ -19,7 +20,7 @@ type ProductClient interface {
 }
 
 type CartItemsRepository interface {
-	ListCart(ctx context.Context, user int64) ([]CartItem, error)
+	ListCart(ctx context.Context, user int64) ([]*CartItem, error)
 	AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error
 	DeleteCart(ctx context.Context, user int64) error
 }
@@ -49,22 +50,51 @@ type CartItem struct {
 	Price uint32
 }
 
-func (m *Model) ListCart(ctx context.Context, user int64) ([]CartItem, error) {
+func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
 	cartItems, err := m.cartItems.ListCart(ctx, user)
 	log.Printf("CartItems.ListCart: %+v\n", cartItems)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, item := range cartItems {
-		product, err := m.product.GetProduct(ctx, item.SKU)
-		log.Printf("Product.GetProduct: %+v\n", product)
-		if err != nil {
-			return nil, err
+	// prepare context for worker pool
+	ctxPool, cancelPool := context.WithCancel(ctx)
+
+	pool := wp.NewWorkerPool(
+		ctxPool,
+		5,
+		// will change cartItems inplace
+		func(item *CartItem) (struct{}, error) {
+			product, err := m.product.GetProduct(ctx, item.SKU)
+			log.Printf("Product.GetProduct: %+v\n", product)
+			if err != nil {
+				return struct{}{}, err
+			}
+			item.Name = product.Name
+			item.Price = product.Price
+			return struct{}{}, err
+		},
+	)
+
+	// run reader
+	result := pool.Submit(cartItems)
+	go func() {
+		for r := range result {
+			if r.Err != nil {
+				err = r.Err
+				break
+			}
 		}
 
-		item.Name = product.Name
-		item.Price = product.Price
+		// tell the pool we are ready
+		cancelPool()
+	}()
+
+	// waiting all the tasks to be done
+	pool.Close()
+
+	if err != nil {
+		return nil, err
 	}
 
 	return cartItems, nil
