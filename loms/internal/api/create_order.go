@@ -23,8 +23,11 @@ func (s *Service) CreateOrder(ctx context.Context, req *loms.RequestCreateOrder)
 	}
 
 	orderId, err := s.model.CreateOrder(ctx, req.User, items)
+	if err != nil {
+		return nil, err
+	}
 
 	return &loms.ResponseCreateOrder{
 		OrderID: orderId,
-	}, err
+	}, nil
 }
