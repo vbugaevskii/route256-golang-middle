@@ -28,16 +28,16 @@
 
 # Домашнее задание №3
 
-1. [ ] Для каждого сервиса(где необходимо что-то сохранять/брать) поднять отдельную БД в __docker-compose__.
-2. [ ] Сделать миграции в каждом сервисе (достаточно папки миграций и скрипта).
-3. [ ] Создать необходимые таблицы.
-4. [ ] Реализовать логику репозитория в каждом сервисе.
-5. [ ] В качестве query builder-а можно использовать любую библиотеку (согласовать индивидуально с тьютором). Рекомендуется https://github.com/Masterminds/squirrel.
-6. [ ] Драйвер для работы с postgresql: только __pgx__ (pool).
-7. [ ] В одном из сервисов сделать транзакционность запросов (как на воркшопе).
+1. [x] Для каждого сервиса(где необходимо что-то сохранять/брать) поднять отдельную БД в __docker-compose__.
+2. [x] Сделать миграции в каждом сервисе (достаточно папки миграций и скрипта).
+3. [x] Создать необходимые таблицы.
+4. [x] Реализовать логику репозитория в каждом сервисе.
+5. [x] В качестве query builder-а можно использовать любую библиотеку (согласовать индивидуально с тьютором). Рекомендуется https://github.com/Masterminds/squirrel.
+6. [x] Драйвер для работы с postgresql: только __pgx__ (pool).
+7. [x] В одном из сервисов сделать транзакционность запросов (как на воркшопе).
 
 Задание на алмазик:
-1. Для каждой БД полнять свой балансировщик (pgbouncer или odyssey, можно и то и то). Сервисы ходят не на прямую в БД, а через балансировщик
+1. [x] Для каждой БД полнять свой балансировщик (pgbouncer или odyssey, можно и то и то). Сервисы ходят не на прямую в БД, а через балансировщик
 
 *Дедлайн: 10 июня, 23:59 (сдача) / 13 июня, 23:59 (проверка)*
 
@@ -77,4 +77,44 @@ grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 check
 grpcurl -plaintext -d '{"user": 1, "sku": 12, "count": 23}' localhost:8080 checkout.Checkout/DeleteFromCart
 grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart
 grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase
+```
+
+Клиент для накатки миграций - [`goose`](https://github.com/pressly/goose)
+
+```bash
+# создать миграцию init
+goose create init sql
+```
+
+Ручное тестирование:
+
+```bash
+set -x
+
+grpcurl -plaintext -d '{"sku": 773587830}' localhost:8081 loms.Loms/Stocks # OK
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # ERROR
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773587830, "count": 1}' localhost:8080 checkout.Checkout/DeleteFromCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"user": 1, "sku": 773596051, "count": 3}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/Purchase # OK -> orderId=1
+grpcurl -plaintext -d '{"user": 1}' localhost:8080 checkout.Checkout/ListCart # OK
+grpcurl -plaintext -d '{"orderID": 1}' localhost:8081 loms.Loms/ListOrder # OK
+
+grpcurl -plaintext -d '{"user": 2, "sku": 773587830, "count": 5}' localhost:8080 checkout.Checkout/AddToCart # OK
+grpcurl -plaintext -d '{"user": 2}' localhost:8080 checkout.Checkout/ListCart # OK
+
+grpcurl -plaintext -d '{"orderID": 1}' localhost:8081 loms.Loms/OrderPayed # OK
+grpcurl -plaintext -d '{"orderID": 42}' localhost:8081 loms.Loms/ListOrder # ERROR
+
+grpcurl -plaintext -d '{"user": 2}' localhost:8080 checkout.Checkout/Purchase # ERROR -> orderId=2
+grpcurl -plaintext -d '{"orderID": 2}' localhost:8081 loms.Loms/ListOrder # OK
+
+grpcurl -plaintext -d '{"sku": 773587830}' localhost:8081 loms.Loms/Stocks # OK
 ```

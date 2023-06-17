@@ -5,6 +5,7 @@ build-all:
 
 run-all: build-all
 	# sudo docker compose up --force-recreate --build
+	mkdir -p checkout_pgdata loms_pgdata
 	docker-compose up --force-recreate --build
 
 precommit:

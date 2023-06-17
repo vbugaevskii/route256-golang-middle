@@ -15,5 +15,6 @@ func (s *Service) CancelOrder(ctx context.Context, req *loms.RequestCancelOrder)
 		return &emptypb.Empty{}, ErrOrderNotFound
 	}
 
-	return &emptypb.Empty{}, nil
+	err := s.model.CancelOrder(ctx, req.OrderID)
+	return &emptypb.Empty{}, err
 }

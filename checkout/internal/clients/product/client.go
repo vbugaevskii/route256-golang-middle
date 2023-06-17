@@ -8,23 +8,23 @@ import (
 )
 
 type RequestGetProduct struct {
-	Token string `json:"token"`
-	SKU   uint32 `json:"sku"`
+	Token string
+	SKU   uint32
 }
 
 type ResponseGetProduct struct {
-	Name  string `json:"name"`
-	Price uint32 `json:"price"`
+	Name  string
+	Price uint32
 }
 
 type RequestListSkus struct {
-	Token         string `json:"token"`
-	StartAfterSku uint32 `json:"startAfterSku"`
-	Count         uint32 `json:"count"`
+	Token         string
+	StartAfterSku uint32
+	Count         uint32
 }
 
 type ResponseListSkus struct {
-	SKUList []uint32 `json:"skus"`
+	SKUList []uint32
 }
 
 type ProductService struct {

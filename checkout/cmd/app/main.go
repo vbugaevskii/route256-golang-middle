@@ -10,10 +10,12 @@ import (
 	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
+	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
 	"strconv"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -43,12 +45,22 @@ func main() {
 	}
 	defer connProduct.Close()
 
+	pool, err := pgxpool.Connect(
+		context.Background(),
+		config.AppConfig.Postgres.URL(),
+	)
+	if err != nil {
+		log.Fatalf("failed to connect to db: %v", err)
+	}
+	defer pool.Close()
+
 	model := domain.New(
 		cliloms.NewLomsClient(connLoms),
 		cliproduct.NewProductClient(
 			connProduct,
 			config.AppConfig.Services.ProductService.Token,
 		),
+		pgcartitems.NewCartItemsRepository(pool),
 	)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))

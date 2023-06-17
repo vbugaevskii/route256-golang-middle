@@ -15,5 +15,6 @@ func (s *Service) OrderPayed(ctx context.Context, req *loms.RequestOrderPayed) (
 		return &emptypb.Empty{}, ErrOrderNotFound
 	}
 
-	return &emptypb.Empty{}, nil
+	err := s.model.OrderPayed(ctx, req.OrderID)
+	return &emptypb.Empty{}, err
 }
