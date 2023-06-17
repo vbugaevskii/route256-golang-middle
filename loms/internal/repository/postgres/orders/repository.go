@@ -109,7 +109,7 @@ func (r *Repository) ListOrderOutdated(ctx context.Context) ([]domain.Order, err
 		Select(ColumnOrderId, ColumnUserId, ColumnStatus, ColumnCreatedAt).
 		From(TableName).
 		Where(sq.Eq{ColumnStatus: schema.StatusAwaitingPayment}).
-		Where(sq.Expr("? - created_at >= interval '10 minutes'", time.Now()))
+		Where("created_at < now() - interval '10 minutes'")
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

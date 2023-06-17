@@ -291,24 +291,12 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 }
 
 func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Minute)
 
 	for {
 		select {
 		case <-ticker.C:
-			var orders []Order
-
-			err := m.txManager.RunRepeatableRead(ctx, func(ctxTx context.Context) error {
-				var err error
-
-				orders, err = m.orders.ListOrderOutdated(ctxTx)
-				if err != nil {
-					return err
-				}
-
-				return nil
-			})
-
+			orders, err := m.orders.ListOrderOutdated(ctx)
 			if err != nil {
 				return err
 			}
