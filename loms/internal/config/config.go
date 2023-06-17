@@ -9,11 +9,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type ConfigService struct {
-	Netloc string `yaml:"netloc"`
-	Token  string `yaml:"token"`
-}
-
 type ConfigPostgres struct {
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
@@ -27,11 +22,6 @@ type Config struct {
 		GRPC int `yaml:"grpc"`
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
-
-	Services struct {
-		Loms           ConfigService `yaml:"loms"`
-		ProductService ConfigService `yaml:"product_service"`
-	} `yaml:"services"`
 
 	Postgres ConfigPostgres `yaml:"postgres"`
 }
@@ -64,6 +54,6 @@ func (p *ConfigPostgres) URL() string {
 	builder.WriteString(strconv.Itoa(p.Port))
 	builder.WriteRune('/')
 	builder.WriteString(p.Database)
-	builder.WriteString("?sslmode=disable")
+	builder.WriteString("?sslmode=disable&statement_cache_mode=describe")
 	return builder.String()
 }

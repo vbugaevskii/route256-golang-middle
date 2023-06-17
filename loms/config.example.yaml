@@ -1,0 +1,10 @@
+port:
+  grpc: 8081
+  http: 8091
+
+postgres:
+  host: "localhost"
+  port: 5434
+  user: "postgres"
+  password: "password"
+  database: "loms"

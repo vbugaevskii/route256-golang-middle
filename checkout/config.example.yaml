@@ -9,3 +9,10 @@ services:
   product_service:
     netloc: "route256.pavl.uk:8082"
     token: "testtoken"
+
+postgres:
+  host: "localhost"
+  port: 5433
+  user: "postgres"
+  password: "password"
+  database: "checkout"
