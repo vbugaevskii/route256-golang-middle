@@ -55,6 +55,27 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 	return nil
 }
 
+func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32) error {
+	query := sq.
+		Delete(TableName).
+		Where(sq.Eq{ColumnUserId: user, ColumnSKU: sku})
+
+	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return fmt.Errorf("build query DeleteFromCart: %s", err)
+	}
+
+	log.Printf("SQL: %s\n", queryRaw)
+	log.Printf("SQL: %+v\n", queryArgs)
+
+	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
+	if err != nil {
+		return fmt.Errorf("exec query for DeleteFromCart: %s", err)
+	}
+
+	return nil
+}
+
 func (r *Repository) ListCart(ctx context.Context, user int64) ([]*domain.CartItem, error) {
 	query := sq.
 		Select(ColumnUserId, ColumnSKU, ColumnCount).

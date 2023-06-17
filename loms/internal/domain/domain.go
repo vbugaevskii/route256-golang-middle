@@ -185,10 +185,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		}
 
 		defer func() {
-			if err != nil {
-				_ = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed)
-			} else {
-				_ = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusAwaitingPayment)
+			if err == nil {
+				return
+			}
+
+			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
+				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
 			}
 		}()
 
@@ -232,6 +234,11 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		}
 
 		err = m.reservations.InsertOrderReservations(ctxTx, orderId, itemsReservered)
+		if err != nil {
+			return err
+		}
+
+		err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusAwaitingPayment)
 		if err != nil {
 			return err
 		}
