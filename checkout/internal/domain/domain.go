@@ -21,6 +21,7 @@ type ProductClient interface {
 type CartItemsRepository interface {
 	ListCart(ctx context.Context, user int64) ([]CartItem, error)
 	AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error
+	DeleteFromCart(ctx context.Context, user int64, sku uint32) error
 	DeleteCart(ctx context.Context, user int64) error
 }
 
@@ -162,7 +163,11 @@ func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, coun
 		countInCart -= count
 	}
 
-	err = m.cartItems.AddToCart(ctx, user, sku, countInCart)
+	if countInCart > 0 {
+		err = m.cartItems.AddToCart(ctx, user, sku, countInCart)
+	} else {
+		err = m.cartItems.DeleteFromCart(ctx, user, sku)
+	}
 	if err != nil {
 		return err
 	}
