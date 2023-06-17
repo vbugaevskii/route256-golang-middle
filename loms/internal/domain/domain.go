@@ -77,13 +77,13 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 			err           error
 		)
 
-		order, err = m.orders.ListOrder(ctx, orderId)
+		order, err = m.orders.ListOrder(ctxTx, orderId)
 		log.Printf("Orders.ListOrder: %+v\n", order)
 		if err != nil {
 			return err
 		}
 
-		itemsReserved, err = m.reservations.ListOrderReservations(ctx, orderId)
+		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
 		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
 		if err != nil {
 			return err
