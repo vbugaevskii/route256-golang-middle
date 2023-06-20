@@ -43,7 +43,12 @@ func main() {
 		orders.NewOrdersRepository(pool),
 		ordersreservations.NewOrdersReservationsRepository(pool),
 	)
-	go model.RunCancelOrderByTimeout(context.Background())
+	go func() {
+		err := model.RunCancelOrderByTimeout(context.Background())
+		if err != nil {
+			log.Fatalf("failed to cancel order by timeout: %v", err)
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
