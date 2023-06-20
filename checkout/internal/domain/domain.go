@@ -9,19 +9,19 @@ import (
 	wp "route256/libs/workerpool"
 )
 
-//go:generate mockery --filename mock_loms.go --name LomsClient
+//go:generate mockery --filename loms_mock.go --name LomsClient
 type LomsClient interface {
 	Stocks(ctx context.Context, sku uint32) (cliloms.ResponseStocks, error)
 	CreateOrder(ctx context.Context, user int64, items []cliloms.RequestCreateOrderItem) (cliloms.ResponseCreateOrder, error)
 }
 
-//go:generate mockery --filename mock_prodcut.go --name ProductClient
+//go:generate mockery --filename product_mock.go --name ProductClient
 type ProductClient interface {
 	GetProduct(ctx context.Context, sku uint32) (cliproduct.ResponseGetProduct, error)
 	ListSkus(ctx context.Context, startAfterSku uint32, count uint32) (cliproduct.ResponseListSkus, error)
 }
 
-//go:generate mockery --filename mock_cart_items.go --name CartItemsRepository
+//go:generate mockery --filename cart_items_mock.go --name CartItemsRepository
 type CartItemsRepository interface {
 	ListCart(ctx context.Context, user int64) ([]*CartItem, error)
 	AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error
