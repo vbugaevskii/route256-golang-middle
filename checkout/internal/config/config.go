@@ -12,6 +12,7 @@ import (
 type ConfigService struct {
 	Netloc string `yaml:"netloc"`
 	Token  string `yaml:"token"`
+	RPS    int    `yaml:"rps"`
 }
 
 type ConfigPostgres struct {

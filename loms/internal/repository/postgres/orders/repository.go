@@ -8,8 +8,10 @@ import (
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/internal/repository/schema"
+	"time"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -27,6 +29,8 @@ const (
 	ColumnOrderId = "order_id"
 	ColumnUserId  = "user_id"
 	ColumnStatus  = "status"
+
+	ColumnCreatedAt = "created_at"
 )
 
 func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order, error) {
@@ -56,8 +60,8 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, error) {
 	query := sq.
 		Insert(TableName).
-		Columns(ColumnUserId, ColumnStatus).
-		Values(userId, schema.StatusNew).
+		Columns(ColumnUserId, ColumnStatus, ColumnCreatedAt).
+		Values(userId, schema.StatusNew, time.Now()).
 		Suffix(fmt.Sprintf("RETURNING %s", ColumnOrderId))
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
@@ -98,4 +102,31 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, statu
 	}
 
 	return nil
+}
+
+func (r *Repository) ListOrderOutdated(ctx context.Context) ([]domain.Order, error) {
+	query := sq.
+		Select(ColumnOrderId, ColumnUserId, ColumnStatus, ColumnCreatedAt).
+		From(TableName).
+		Where(sq.Eq{ColumnStatus: schema.StatusAwaitingPayment}).
+		Where("created_at < now() - interval '10 minutes'")
+
+	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
+	if err != nil {
+		return nil, fmt.Errorf("build query ListOrder: %s", err)
+	}
+
+	// log.Printf("SQL: %s\n", queryRaw)
+	// log.Printf("SQL: %+v\n", queryArgs)
+
+	var ordersSchema []schema.Order
+	if err := pgxscan.Select(ctx, r.GetQuerier(ctx), &ordersSchema, queryRaw, queryArgs...); err != nil {
+		return nil, err
+	}
+
+	ordersDomain := make([]domain.Order, 0, len(ordersSchema))
+	for _, order := range ordersSchema {
+		ordersDomain = append(ordersDomain, converter.ConvOrderSchemaDomain(order))
+	}
+	return ordersDomain, nil
 }
