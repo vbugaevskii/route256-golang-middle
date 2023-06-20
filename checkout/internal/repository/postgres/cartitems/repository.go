@@ -76,7 +76,7 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 	return nil
 }
 
-func (r *Repository) ListCart(ctx context.Context, user int64) ([]domain.CartItem, error) {
+func (r *Repository) ListCart(ctx context.Context, user int64) ([]*domain.CartItem, error) {
 	query := sq.
 		Select(ColumnUserId, ColumnSKU, ColumnCount).
 		From(TableName).

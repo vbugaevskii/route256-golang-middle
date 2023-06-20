@@ -1,5 +1,7 @@
 package schema
 
+import "time"
+
 type StatusType string
 
 const (
@@ -11,7 +13,8 @@ const (
 )
 
 type Order struct {
-	OrderId int64      `db:"order_id"`
-	UserId  int64      `db:"user_id"`
-	Status  StatusType `db:"status"`
+	OrderId   int64      `db:"order_id"`
+	UserId    int64      `db:"user_id"`
+	Status    StatusType `db:"status"`
+	CreatedAt time.Time  `db:"created_at"`
 }
