@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/domain"
 	"route256/checkout/internal/domain/mocks"
@@ -33,16 +34,8 @@ func TestListCart(t *testing.T) {
 		}
 		resp2 := cliproduct.ResponseGetProduct{
 			Name:  "product_2",
-			Price: 10,
+			Price: 100,
 		}
-
-		itemWithFields1 := item1
-		itemWithFields1.Name = resp1.Name
-		itemWithFields1.Price = resp1.Price
-
-		itemWithFields2 := item2
-		itemWithFields2.Name = resp2.Name
-		itemWithFields2.Price = resp2.Price
 
 		cartItems := []*domain.CartItem{
 			&item1,
@@ -59,8 +52,8 @@ func TestListCart(t *testing.T) {
 		lomsService := mocks.NewLomsClient(t)
 
 		expected := []*domain.CartItem{
-			&itemWithFields1,
-			&itemWithFields2,
+			{SKU: item1.SKU, Count: item1.Count, Name: resp1.Name, Price: resp1.Price},
+			{SKU: item2.SKU, Count: item2.Count, Name: resp2.Name, Price: resp2.Price},
 		}
 
 		// Act
@@ -70,6 +63,58 @@ func TestListCart(t *testing.T) {
 		// Assert
 		require.NoError(t, err)
 		require.Len(t, result, 2, "len(result) != 2")
+		require.ElementsMatch(t, expected, result)
+	})
+
+	t.Run("success_multiple", func(t *testing.T) {
+		skuList := []uint32{6, 8, 7, 1, 3, 9, 10, 2, 4, 5}
+
+		itemList := make([]*domain.CartItem, 0, len(skuList))
+		for i, sku := range skuList {
+			item := domain.CartItem{
+				SKU:   sku,
+				Count: uint16(i + 1),
+			}
+			itemList = append(itemList, &item)
+		}
+
+		respList := make([]cliproduct.ResponseGetProduct, 0, len(skuList))
+		for i, sku := range skuList {
+			resp := cliproduct.ResponseGetProduct{
+				Name:  fmt.Sprintf("product_%d", sku),
+				Price: uint32(i * 10),
+			}
+			respList = append(respList, resp)
+		}
+
+		cartItemsRepo := mocks.NewCartItemsRepository(t)
+		cartItemsRepo.On("ListCart", mock.Anything, int64(1)).Return(itemList, nil)
+
+		productService := mocks.NewProductClient(t)
+		for i, sku := range skuList {
+			productService.On("GetProduct", mock.Anything, sku).Return(respList[i], nil)
+		}
+
+		lomsService := mocks.NewLomsClient(t)
+
+		expected := make([]*domain.CartItem, 0, len(skuList))
+		for i, item := range itemList {
+			itemCopy := domain.CartItem{
+				SKU:   item.SKU,
+				Count: item.Count,
+				Name:  respList[i].Name,
+				Price: respList[i].Price,
+			}
+			expected = append(expected, &itemCopy)
+		}
+
+		// Act
+		model := domain.New(lomsService, productService, cartItemsRepo)
+		result, err := model.ListCart(context.Background(), int64(1))
+
+		// Assert
+		require.NoError(t, err)
+		require.Len(t, result, len(expected), "len(result) != len(expected)")
 		require.ElementsMatch(t, expected, result)
 	})
 }
