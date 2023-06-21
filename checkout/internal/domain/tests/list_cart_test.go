@@ -173,7 +173,7 @@ func TestListCart(t *testing.T) {
 
 		// Act
 		model := domain.New(lomsService, productService, cartItemsRepo)
-		_, err := model.ListCart(context.Background(), int64(1))
+		_, err := model.ListCart(context.Background(), userId)
 
 		// Assert
 		require.Error(t, err, errExpected)
