@@ -29,7 +29,7 @@ bindir:
 	mkdir -p ${BINDIR}
 
 format: install-smartimports
-	${SMARTIMPORTS} -exclude pkg,internal/domain/mocks -v
+	${SMARTIMPORTS} -exclude pkg,internal/domain/mocks,internal/api/mocks -v
 
 install-lint: bindir
 	test -f ${LINTBIN} || \
