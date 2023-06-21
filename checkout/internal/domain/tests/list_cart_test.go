@@ -17,6 +17,8 @@ func TestListCart(t *testing.T) {
 	t.Parallel()
 
 	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
 		var userId int64 = 1
 
 		sku1 := uint32(1)
@@ -70,6 +72,8 @@ func TestListCart(t *testing.T) {
 	})
 
 	t.Run("success multiple", func(t *testing.T) {
+		t.Parallel()
+
 		var userId int64 = 1
 
 		skuList := []uint32{6, 8, 7, 1, 3, 9, 10, 2, 4, 5}
@@ -124,6 +128,8 @@ func TestListCart(t *testing.T) {
 	})
 
 	t.Run("fail cart items", func(t *testing.T) {
+		t.Parallel()
+
 		var userId int64 = 1
 
 		errExpected := errors.New("error expected")
@@ -143,6 +149,8 @@ func TestListCart(t *testing.T) {
 	})
 
 	t.Run("fail product service", func(t *testing.T) {
+		t.Parallel()
+
 		var (
 			userId int64  = 1
 			sku    uint32 = 2

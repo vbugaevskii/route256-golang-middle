@@ -17,6 +17,8 @@ func TestListCart(t *testing.T) {
 	t.Parallel()
 
 	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
 		sku1 := uint32(1)
 		sku2 := uint32(2)
 
