@@ -50,7 +50,7 @@ func TestListCart(t *testing.T) {
 		}
 
 		cartItemsRepo := mocks.NewCartItemsRepository(t)
-		cartItemsRepo.On("ListCart", mock.Anything, int64(1)).Return(cartItems, nil).Once()
+		cartItemsRepo.On("ListCart", mock.Anything, int64(1)).Return(cartItems, nil)
 
 		productService := mocks.NewProductClient(t)
 		productService.On("GetProduct", mock.Anything, sku1).Return(resp1, nil)
