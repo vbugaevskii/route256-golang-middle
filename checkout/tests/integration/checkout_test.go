@@ -76,6 +76,7 @@ func (s *TestSuiteCheckout) SetupSuite() {
 		},
 	}
 
+	// NOTE: I don't have direct access to ProductService, so I will use mock instead
 	productService := mocks.NewProductClient(s.T())
 	for _, item := range s.productHub {
 		productService.On("GetProduct", mock.Anything, item.SKU).Return(cliproduct.ResponseGetProduct{
@@ -84,7 +85,6 @@ func (s *TestSuiteCheckout) SetupSuite() {
 		}, nil)
 	}
 
-	// NOTE: I don't have direct access to ProductService, so I will use mock instead
 	s.model = domain.New(
 		cliloms.NewLomsClient(connLoms),
 		productService,
