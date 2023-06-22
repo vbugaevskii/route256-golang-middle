@@ -7,6 +7,7 @@ LINTBIN=${BINDIR}/lint_${GOVER}_${LINTVER}
 PROTODIR=${CURDIR}/../api
 PROTOC=protoc
 PACKAGE=route256/checkout/cmd/app
+POSTGRES_URI="postgres://postgres:password@localhost:5433/checkout?sslmode=disable&statement_cache_mode=describe"
 
 all: format build test lint
 
@@ -91,3 +92,11 @@ build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name 
 		--go-grpc_out=pkg/product --go-grpc_opt=paths=source_relative \
 		--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 		${PROTODIR}/product/product.proto
+
+migration-up:
+	goose -dir ./migrations postgres ${POSTGRES_URI} up
+	goose -dir ./migrations postgres ${POSTGRES_URI} status
+
+migration-down:
+	goose -dir ./migrations postgres ${POSTGRES_URI} down
+	goose -dir ./migrations postgres ${POSTGRES_URI} status

@@ -7,6 +7,7 @@ LINTBIN=${BINDIR}/lint_${GOVER}_${LINTVER}
 PROTODIR=${CURDIR}/../api
 PROTOC=protoc
 PACKAGE=route256/loms/cmd/app
+POSTGRES_URI="postgres://postgres:password@localhost:5434/loms?sslmode=disable&statement_cache_mode=describe"
 
 all: format build test lint
 
@@ -72,3 +73,11 @@ build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name 
 		--grpc-gateway_out=pkg/loms --grpc-gateway_opt=paths=source_relative \
 		--plugin=protoc-gen-grpc-gateway=bin/protoc-gen-grpc-gateway \
 		${PROTODIR}/loms/loms.proto
+
+migration-up:
+	goose -dir ./migrations postgres ${POSTGRES_URI} up
+	goose -dir ./migrations postgres ${POSTGRES_URI} status
+
+migration-down:
+	goose -dir ./migrations postgres ${POSTGRES_URI} down
+	goose -dir ./migrations postgres ${POSTGRES_URI} status
