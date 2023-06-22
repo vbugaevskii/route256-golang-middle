@@ -4,8 +4,12 @@ import (
 	"context"
 	"log"
 	"route256/checkout/internal/api"
+	cliloms "route256/checkout/internal/clients/loms"
+	cliproduct "route256/checkout/internal/clients/product"
 	"route256/checkout/internal/config"
 	"route256/checkout/internal/domain"
+	mocks "route256/checkout/internal/domain/mocks"
+	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
 	"testing"
 
@@ -14,11 +18,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
-
-	cliloms "route256/checkout/internal/clients/loms"
-	cliproduct "route256/checkout/internal/clients/product"
-	mocks "route256/checkout/internal/domain/mocks"
-	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 )
 
 type ProductInfo struct {
