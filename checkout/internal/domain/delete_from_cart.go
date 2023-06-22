@@ -38,3 +38,20 @@ func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, coun
 
 	return nil
 }
+
+func (m *Model) DeleteCart(ctx context.Context, user int64) error {
+	cartItems, err := m.cartItems.ListCart(ctx, user)
+	log.Printf("CartItems.ListCart: %+v\n", cartItems)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range cartItems.Items {
+		err = m.cartItems.DeleteFromCart(ctx, user, item.SKU)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
