@@ -1,8 +1,7 @@
-package tests
+package api
 
 import (
 	"context"
-	"route256/checkout/internal/api"
 	"route256/checkout/internal/api/mocks"
 	"route256/checkout/internal/domain"
 	"route256/checkout/pkg/checkout"
@@ -29,7 +28,7 @@ func TestListCart(t *testing.T) {
 		model.On("ListCart", mock.Anything, userId).Return(cartItems, nil)
 
 		// Act
-		service := api.NewService(model)
+		service := NewService(model)
 		result, err := service.ListCart(context.Background(), &checkout.RequestListCart{
 			User: 1,
 		})

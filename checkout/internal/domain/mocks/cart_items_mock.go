@@ -4,7 +4,7 @@ package mocks
 
 import (
 	context "context"
-	domain "route256/checkout/internal/domain"
+	cartitems "route256/checkout/internal/repository/postgres/cartitems"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -155,20 +155,18 @@ func (_c *CartItemsRepository_DeleteFromCart_Call) RunAndReturn(run func(context
 }
 
 // ListCart provides a mock function with given fields: ctx, user
-func (_m *CartItemsRepository) ListCart(ctx context.Context, user int64) ([]*domain.CartItem, error) {
+func (_m *CartItemsRepository) ListCart(ctx context.Context, user int64) (cartitems.ResponseListCart, error) {
 	ret := _m.Called(ctx, user)
 
-	var r0 []*domain.CartItem
+	var r0 cartitems.ResponseListCart
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64) ([]*domain.CartItem, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) (cartitems.ResponseListCart, error)); ok {
 		return rf(ctx, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int64) []*domain.CartItem); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64) cartitems.ResponseListCart); ok {
 		r0 = rf(ctx, user)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*domain.CartItem)
-		}
+		r0 = ret.Get(0).(cartitems.ResponseListCart)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int64) error); ok {
@@ -199,12 +197,12 @@ func (_c *CartItemsRepository_ListCart_Call) Run(run func(ctx context.Context, u
 	return _c
 }
 
-func (_c *CartItemsRepository_ListCart_Call) Return(_a0 []*domain.CartItem, _a1 error) *CartItemsRepository_ListCart_Call {
+func (_c *CartItemsRepository_ListCart_Call) Return(_a0 cartitems.ResponseListCart, _a1 error) *CartItemsRepository_ListCart_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *CartItemsRepository_ListCart_Call) RunAndReturn(run func(context.Context, int64) ([]*domain.CartItem, error)) *CartItemsRepository_ListCart_Call {
+func (_c *CartItemsRepository_ListCart_Call) RunAndReturn(run func(context.Context, int64) (cartitems.ResponseListCart, error)) *CartItemsRepository_ListCart_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	cliloms "route256/checkout/internal/clients/loms"
 	cliproduct "route256/checkout/internal/clients/product"
+	"route256/checkout/internal/repository/postgres/cartitems"
 	wp "route256/libs/workerpool"
 )
 
@@ -23,7 +24,7 @@ type ProductClient interface {
 
 //go:generate mockery --filename cart_items_mock.go --name CartItemsRepository
 type CartItemsRepository interface {
-	ListCart(ctx context.Context, user int64) ([]*CartItem, error)
+	ListCart(ctx context.Context, user int64) (cartitems.ResponseListCart, error)
 	AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error
 	DeleteFromCart(ctx context.Context, user int64, sku uint32) error
 	DeleteCart(ctx context.Context, user int64) error
@@ -57,10 +58,18 @@ type CartItem struct {
 const numProductWorkers = 5
 
 func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
-	cartItems, err := m.cartItems.ListCart(ctx, user)
-	log.Printf("CartItems.ListCart: %+v\n", cartItems)
+	cartItemsRepo, err := m.cartItems.ListCart(ctx, user)
+	log.Printf("CartItems.ListCart: %+v\n", cartItemsRepo)
 	if err != nil {
 		return nil, err
+	}
+
+	cartItems := make([]*CartItem, 0, len(cartItemsRepo.Items))
+	for _, item := range cartItemsRepo.Items {
+		cartItems = append(cartItems, &CartItem{
+			SKU:   item.SKU,
+			Count: item.Count,
+		})
 	}
 
 	// prepare context for worker pool
@@ -143,7 +152,7 @@ func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uin
 	}
 
 	var countInCart uint16
-	for _, item := range cartItems {
+	for _, item := range cartItems.Items {
 		if item.SKU == sku {
 			countInCart += item.Count
 		}
@@ -184,7 +193,7 @@ func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, coun
 	}
 
 	var countInCart uint16
-	for _, item := range cartItems {
+	for _, item := range cartItems.Items {
 		if item.SKU == sku {
 			countInCart += item.Count
 		}

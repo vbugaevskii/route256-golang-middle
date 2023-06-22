@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"route256/checkout/internal/converter"
-	"route256/checkout/internal/domain"
 	"route256/checkout/internal/repository/schema"
 
 	sq "github.com/Masterminds/squirrel"
@@ -28,6 +26,15 @@ const (
 	ColumnSKU    = "sku"
 	ColumnCount  = "count"
 )
+
+type CartItem struct {
+	SKU   uint32
+	Count uint16
+}
+
+type ResponseListCart struct {
+	Items []CartItem
+}
 
 func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	query := sq.
@@ -76,7 +83,7 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 	return nil
 }
 
-func (r *Repository) ListCart(ctx context.Context, user int64) ([]*domain.CartItem, error) {
+func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart, error) {
 	query := sq.
 		Select(ColumnUserId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -85,7 +92,7 @@ func (r *Repository) ListCart(ctx context.Context, user int64) ([]*domain.CartIt
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query ListCart: %s", err)
+		return ResponseListCart{}, fmt.Errorf("build query ListCart: %s", err)
 	}
 
 	log.Printf("SQL: %s\n", queryRaw)
@@ -94,9 +101,11 @@ func (r *Repository) ListCart(ctx context.Context, user int64) ([]*domain.CartIt
 	var result []schema.CartItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query ListCart: %s", err)
+		return ResponseListCart{}, fmt.Errorf("exec query ListCart: %s", err)
 	}
-	return converter.ConvCartItemsSchemaDomain(result), nil
+	return ResponseListCart{
+		Items: ConvCartItemsSchemaDomain(result),
+	}, nil
 }
 
 func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
