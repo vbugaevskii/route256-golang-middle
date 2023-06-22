@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"route256/checkout/internal/api/mocks"
 	"route256/checkout/internal/domain"
 	"route256/checkout/pkg/checkout"
@@ -30,7 +31,7 @@ func TestListCart(t *testing.T) {
 		// Act
 		service := NewService(model)
 		result, err := service.ListCart(context.Background(), &checkout.RequestListCart{
-			User: 1,
+			User: userId,
 		})
 
 		expected := &checkout.ResponseListCart{
@@ -53,5 +54,39 @@ func TestListCart(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, result.Items, len(cartItems), "len(result.Items) != len(cartItems)")
 		require.Equal(t, expected, result)
+	})
+
+	t.Run("fail zero user", func(t *testing.T) {
+		t.Parallel()
+
+		model := mocks.NewImpl(t)
+
+		// Act
+		service := NewService(model)
+		_, err := service.ListCart(context.Background(), &checkout.RequestListCart{
+			User: 0,
+		})
+
+		// Assert
+		require.Error(t, err, ErrUserNotFound)
+	})
+
+	t.Run("fail domain list cart", func(t *testing.T) {
+		t.Parallel()
+
+		var userId int64 = 1
+		errExpected := errors.New("error expected")
+
+		model := mocks.NewImpl(t)
+		model.On("ListCart", mock.Anything, userId).Return(nil, errExpected)
+
+		// Act
+		service := NewService(model)
+		_, err := service.ListCart(context.Background(), &checkout.RequestListCart{
+			User: userId,
+		})
+
+		// Assert
+		require.Error(t, err, errExpected)
 	})
 }
