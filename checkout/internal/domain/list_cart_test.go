@@ -19,10 +19,12 @@ func TestListCart(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		t.Parallel()
 
-		var userId int64 = 1
+		var (
+			userId int64 = 1
 
-		sku1 := uint32(1)
-		sku2 := uint32(2)
+			sku1 uint32 = 1
+			sku2 uint32 = 2
+		)
 
 		item1 := cartitems.CartItem{
 			SKU:   sku1,
@@ -127,7 +129,7 @@ func TestListCart(t *testing.T) {
 		require.ElementsMatch(t, expected, result)
 	})
 
-	t.Run("fail cart items", func(t *testing.T) {
+	t.Run("fail cartItems.ListCart", func(t *testing.T) {
 		t.Parallel()
 
 		var userId int64 = 1
@@ -148,7 +150,7 @@ func TestListCart(t *testing.T) {
 		require.Error(t, err, errExpected)
 	})
 
-	t.Run("fail product service", func(t *testing.T) {
+	t.Run("fail productService.GetProduct", func(t *testing.T) {
 		t.Parallel()
 
 		var (
