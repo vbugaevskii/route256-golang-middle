@@ -190,7 +190,12 @@ func (s *TestSuiteCheckout) TestCase1() {
 	order, err := s.service.Purchase(s.ctx, &checkout.RequestPurchase{
 		User: userId,
 	})
-	defer s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+	defer func() {
+		err := s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+		if err != nil {
+			log.Fatalf("failed to cancel order: %v", err)
+		}
+	}()
 	log.Printf("Purchase: %+v\n", order)
 
 	s.Require().NoError(err)
@@ -289,7 +294,12 @@ func (s *TestSuiteCheckout) TestCase2() {
 	order, err := s.service.Purchase(s.ctx, &checkout.RequestPurchase{
 		User: userId,
 	})
-	defer s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+	defer func() {
+		err := s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+		if err != nil {
+			log.Fatalf("failed to cancel order: %v", err)
+		}
+	}()
 	log.Printf("Purchase: %+v\n", order)
 
 	s.Require().NoError(err)
