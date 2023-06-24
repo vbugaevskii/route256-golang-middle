@@ -31,6 +31,7 @@ type TestSuiteCheckout struct {
 	suite.Suite
 
 	ctx     context.Context
+	cliLoms *cliloms.LomsService
 	model   *domain.Model
 	service *api.Service
 
@@ -84,8 +85,9 @@ func (s *TestSuiteCheckout) SetupSuite() {
 		}, nil)
 	}
 
+	s.cliLoms = cliloms.NewLomsClient(connLoms)
 	s.model = domain.New(
-		cliloms.NewLomsClient(connLoms),
+		s.cliLoms,
 		productService,
 		pgcartitems.NewCartItemsRepository(pool),
 	)
@@ -173,7 +175,7 @@ func (s *TestSuiteCheckout) TestCase1() {
 	resp, err = s.service.ListCart(s.ctx, &checkout.RequestListCart{
 		User: userId,
 	})
-	log.Printf("ListCart: %+v", resp)
+	log.Printf("ListCart: %+v\n", resp)
 
 	s.Require().NoError(err)
 	s.compareCarts(resp, &checkout.ResponseListCart{
@@ -184,8 +186,26 @@ func (s *TestSuiteCheckout) TestCase1() {
 		TotalPrice: s.productHub[sku1].Price*3 + s.productHub[sku2].Price*3,
 	})
 
-	// TODO: purchase order
-	// How to rollback?
+	// success: purchase
+	order, err := s.service.Purchase(s.ctx, &checkout.RequestPurchase{
+		User: userId,
+	})
+	defer s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+	log.Printf("Purchase: %+v\n", order)
+
+	s.Require().NoError(err)
+
+	// success: list cart
+	resp, err = s.service.ListCart(s.ctx, &checkout.RequestListCart{
+		User: userId,
+	})
+	log.Printf("ListCart: %+v\n", resp)
+
+	s.Require().NoError(err)
+	s.compareCarts(resp, &checkout.ResponseListCart{
+		Items:      make([]*checkout.ResponseListCart_CartItem, 0),
+		TotalPrice: 0,
+	})
 }
 
 func (s *TestSuiteCheckout) createCartItem(sku uint32, count uint32) *checkout.ResponseListCart_CartItem {
