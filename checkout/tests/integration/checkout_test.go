@@ -208,6 +208,113 @@ func (s *TestSuiteCheckout) TestCase1() {
 	})
 }
 
+func (s *TestSuiteCheckout) TestCase2() {
+	var (
+		userId int64 = 1
+
+		sku1 uint32 = 773587830
+		sku2 uint32 = 773596051
+		sku3 uint32 = 773596067
+
+		resp *checkout.ResponseListCart
+		err  error
+	)
+
+	// success: delete cart before test
+	err = s.model.DeleteCart(s.ctx, userId)
+	s.Require().NoError(err)
+
+	// success: add known item to cart
+	_, err = s.service.AddToCart(s.ctx, &checkout.RequestAddToCart{
+		User:  userId,
+		Sku:   sku1,
+		Count: 5,
+	})
+	s.Require().NoError(err)
+
+	// success: add known item to cart
+	_, err = s.service.AddToCart(s.ctx, &checkout.RequestAddToCart{
+		User:  userId,
+		Sku:   sku2,
+		Count: 2,
+	})
+	s.Require().NoError(err)
+
+	// success: list cart
+	resp, err = s.service.ListCart(s.ctx, &checkout.RequestListCart{
+		User: userId,
+	})
+	log.Printf("ListCart: %+v", resp)
+
+	s.Require().NoError(err)
+	s.compareCarts(resp, &checkout.ResponseListCart{
+		Items: []*checkout.ResponseListCart_CartItem{
+			s.createCartItem(sku1, 5),
+			s.createCartItem(sku2, 2),
+		},
+		TotalPrice: s.productHub[sku1].Price*5 + s.productHub[sku2].Price*2,
+	})
+
+	// success: delete item from cart
+	_, err = s.service.DeleteFromCart(s.ctx, &checkout.RequestDeleteFromCart{
+		User:  userId,
+		Sku:   sku2,
+		Count: 10,
+	})
+	s.Require().NoError(err)
+
+	// success: delete not present item from cart
+	_, err = s.service.DeleteFromCart(s.ctx, &checkout.RequestDeleteFromCart{
+		User:  userId,
+		Sku:   sku3,
+		Count: 10,
+	})
+	s.Require().NoError(err)
+
+	// success: list cart
+	resp, err = s.service.ListCart(s.ctx, &checkout.RequestListCart{
+		User: userId,
+	})
+	log.Printf("ListCart: %+v", resp)
+
+	s.Require().NoError(err)
+	s.compareCarts(resp, &checkout.ResponseListCart{
+		Items: []*checkout.ResponseListCart_CartItem{
+			s.createCartItem(sku1, 5),
+		},
+		TotalPrice: s.productHub[sku1].Price * 5,
+	})
+
+	// success: purchase
+	order, err := s.service.Purchase(s.ctx, &checkout.RequestPurchase{
+		User: userId,
+	})
+	defer s.cliLoms.CancelOrder(s.ctx, order.OrderID)
+	log.Printf("Purchase: %+v\n", order)
+
+	s.Require().NoError(err)
+
+	// success: list cart
+	resp, err = s.service.ListCart(s.ctx, &checkout.RequestListCart{
+		User: userId,
+	})
+	log.Printf("ListCart: %+v\n", resp)
+
+	s.Require().NoError(err)
+	s.compareCarts(resp, &checkout.ResponseListCart{
+		Items:      make([]*checkout.ResponseListCart_CartItem, 0),
+		TotalPrice: 0,
+	})
+
+	// fail: not enough stocks
+	_, err = s.service.AddToCart(s.ctx, &checkout.RequestAddToCart{
+		User:  userId,
+		Sku:   sku1,
+		Count: 2,
+	})
+	s.Require().Error(err, api.ErrProductInsufficient)
+}
+
 func (s *TestSuiteCheckout) createCartItem(sku uint32, count uint32) *checkout.ResponseListCart_CartItem {
 	item := checkout.ResponseListCart_CartItem{
 		Sku:   sku,
