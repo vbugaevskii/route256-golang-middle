@@ -9,6 +9,7 @@ import (
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
+	"route256/loms/internal/kafka"
 	"route256/loms/internal/repository/postgres/orders"
 	"route256/loms/internal/repository/postgres/ordersreservations"
 	"route256/loms/internal/repository/postgres/stocks"
@@ -37,8 +38,18 @@ func main() {
 	}
 	defer pool.Close()
 
+	producer, err := kafka.NewProducer(
+		config.AppConfig.Kafka.Brokers,
+		config.AppConfig.Kafka.Topic,
+	)
+	if err != nil {
+		log.Fatalf("failed to create kafka producer: %v", err)
+	}
+	defer producer.Close()
+
 	model := domain.NewModel(
 		tx.NewTxManager(pool),
+		producer,
 		stocks.NewStocksRepository(pool),
 		orders.NewOrdersRepository(pool),
 		ordersreservations.NewOrdersReservationsRepository(pool),

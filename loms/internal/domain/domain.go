@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+type KafkaProducer interface {
+	SendOrderStatus(orderId int64, status string) error
+}
+
 type StocksRepository interface {
 	ListStocks(ctx context.Context, sku uint32) ([]StocksItem, error)
 	RemoveStocks(ctx context.Context, sku uint32, item StocksItem) error
@@ -30,6 +34,8 @@ type OrdersReservationsRepository interface {
 type Model struct {
 	txManager *tx.Manager
 
+	producer KafkaProducer
+
 	stocks       StocksRepository
 	orders       OrdersRepository
 	reservations OrdersReservationsRepository
@@ -37,12 +43,14 @@ type Model struct {
 
 func NewModel(
 	txManager *tx.Manager,
+	producer KafkaProducer,
 	stocks StocksRepository,
 	orders OrdersRepository,
 	reservations OrdersReservationsRepository,
 ) *Model {
 	return &Model{
 		txManager:    txManager,
+		producer:     producer,
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
@@ -184,6 +192,10 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
+		if err = m.producer.SendOrderStatus(orderId, string(StatusNew)); err != nil {
+			log.Printf("Producer.SendOrderStatus FAILED: %v\n", err)
+		}
+
 		defer func() {
 			if err == nil {
 				return
@@ -191,6 +203,10 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
 				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
+			}
+
+			if err = m.producer.SendOrderStatus(orderId, string(StatusFailed)); err != nil {
+				log.Printf("Producer.SendOrderStatus FAILED: %v\n", err)
 			}
 		}()
 
@@ -243,6 +259,11 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
+		err = m.producer.SendOrderStatus(orderId, string(StatusAwaitingPayment))
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -276,6 +297,11 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 		}
 
 		err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusCancelled)
+		if err != nil {
+			return err
+		}
+
+		err = m.producer.SendOrderStatus(orderId, string(StatusCancelled))
 		if err != nil {
 			return err
 		}
@@ -358,6 +384,11 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 		}
 
 		err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusPayed)
+		if err != nil {
+			return err
+		}
+
+		err = m.producer.SendOrderStatus(orderId, string(StatusPayed))
 		if err != nil {
 			return err
 		}

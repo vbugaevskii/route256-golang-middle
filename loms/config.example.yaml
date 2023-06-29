@@ -8,3 +8,10 @@ postgres:
   user: "postgres"
   password: "password"
   database: "loms"
+
+kafka:
+  brokers:
+    - "127.0.0.1:9091"
+		- "127.0.0.1:9092"
+		- "127.0.0.1:9093"
+  topic: "notifications"

@@ -17,6 +17,11 @@ type ConfigPostgres struct {
 	Database string `yaml:"database"`
 }
 
+type ConfigKafka struct {
+	Brokers []string `yaml:"brokers"`
+	Topic   string   `yaml:"topic"`
+}
+
 type Config struct {
 	Port struct {
 		GRPC int `yaml:"grpc"`
@@ -24,6 +29,7 @@ type Config struct {
 	} `yaml:"port"`
 
 	Postgres ConfigPostgres `yaml:"postgres"`
+	Kafka    ConfigKafka    `yaml:"kafka"`
 }
 
 var AppConfig = Config{}
