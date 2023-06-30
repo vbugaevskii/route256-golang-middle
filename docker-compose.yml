@@ -38,9 +38,9 @@ services:
     networks:
       - net
 
-  notification:
-    image: notification
-    build: ./notification
+  notifications:
+    image: notifications
+    build: ./notifications/
     ports:
       - "8082:8082"
     depends_on:
