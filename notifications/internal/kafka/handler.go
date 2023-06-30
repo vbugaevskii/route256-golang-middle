@@ -13,17 +13,23 @@ type Order struct {
 }
 
 type ConsumerGroupHandler struct {
-	ready chan bool
+	ready  chan bool
+	output chan Order
 }
 
 func NewConsumerGroupHandler() ConsumerGroupHandler {
 	return ConsumerGroupHandler{
-		ready: make(chan bool),
+		ready:  make(chan bool),
+		output: make(chan Order),
 	}
 }
 
 func (h *ConsumerGroupHandler) Ready() <-chan bool {
 	return h.ready
+}
+
+func (h *ConsumerGroupHandler) Subscribe() <-chan Order {
+	return h.output
 }
 
 func (h *ConsumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error {
@@ -32,6 +38,7 @@ func (h *ConsumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error {
 }
 
 func (h *ConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error {
+	close(h.output)
 	return nil
 }
 
@@ -50,6 +57,8 @@ func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 				message.Timestamp,
 				message.Topic,
 			)
+
+			h.output <- order
 
 			session.MarkMessage(message, "")
 		case <-session.Context().Done():

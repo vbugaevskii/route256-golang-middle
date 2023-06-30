@@ -30,6 +30,10 @@ func (cg *ConsumerGroup) Ready() <-chan bool {
 	return cg.handler.Ready()
 }
 
+func (cg *ConsumerGroup) Subscribe() <-chan Order {
+	return cg.handler.Subscribe()
+}
+
 func (cg *ConsumerGroup) Close() error {
 	return cg.group.Close()
 }

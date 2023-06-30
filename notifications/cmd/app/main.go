@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"route256/notifications/internal/config"
 	"route256/notifications/internal/kafka"
 	"sync"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 func main() {
@@ -13,6 +16,12 @@ func main() {
 	if err != nil {
 		log.Fatalf("config init: %v", err)
 	}
+
+	bot, err := tgbotapi.NewBotAPI(config.AppConfig.Telegram.Token)
+	if err != nil {
+		log.Panic(err)
+	}
+	bot.Debug = true
 
 	group, err := kafka.NewConsumerGroup(
 		config.AppConfig.Kafka.Brokers,
@@ -37,11 +46,20 @@ func main() {
 
 		for {
 			if err := group.Consume(context.Background()); err != nil {
-				log.Panicf("Error from consumer: %v", err)
+				log.Fatalf("kafka consumer read: %v", err)
 			}
 		}
 	}()
 
 	<-group.Ready()
+
+	for order := range group.Subscribe() {
+		msg := tgbotapi.NewMessage(
+			config.AppConfig.Telegram.ChatId,
+			fmt.Sprintf("OrderId = %d; Status = %s", order.OrderId, order.Status),
+		)
+		bot.Send(msg)
+	}
+
 	wg.Wait()
 }

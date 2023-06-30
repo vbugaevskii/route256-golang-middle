@@ -20,6 +20,11 @@ type Config struct {
 	} `yaml:"port"`
 
 	Kafka ConfigKafka `yaml:"kafka"`
+
+	Telegram struct {
+		Token  string `yaml:"token"`
+		ChatId int64  `yaml:"chat_id"`
+	} `yaml:"telegram"`
 }
 
 var AppConfig = Config{}

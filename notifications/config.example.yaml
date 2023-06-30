@@ -9,3 +9,7 @@ kafka:
     - "127.0.0.1:9093"
   topic: "notifications"
   group: "group-dev"
+
+telegram:
+  token: "token"
+  chat_id: 123
