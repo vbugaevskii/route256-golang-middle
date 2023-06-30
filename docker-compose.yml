@@ -92,6 +92,22 @@ services:
     networks:
       - net
 
+  loms-pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+       - DB_USER=postgres
+       - DB_PASSWORD=password
+       - DB_HOST=loms-postgres-db
+       - DB_NAME=loms
+       - POOL_MODE=transaction
+       - AUTH_TYPE=plain
+    ports:
+      - "5434:5432"
+    depends_on:
+      - loms-postgres-db
+    networks:
+      - net
+
   zookeeper:
     image: confluentinc/cp-zookeeper:latest
     ports:
