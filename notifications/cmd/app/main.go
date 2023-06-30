@@ -58,7 +58,9 @@ func main() {
 			config.AppConfig.Telegram.ChatId,
 			fmt.Sprintf("OrderId = %d; Status = %s", order.OrderId, order.Status),
 		)
-		bot.Send(msg)
+		if _, err := bot.Send(msg); err != nil {
+			log.Printf("failed to send message %v\n", err)
+		}
 	}
 
 	wg.Wait()
