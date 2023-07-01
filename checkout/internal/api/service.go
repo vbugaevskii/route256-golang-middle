@@ -6,7 +6,7 @@ import (
 	"route256/checkout/pkg/checkout"
 )
 
-//go:generate mockery --filename impl_mock.go --name Impl
+//go:generate ${GOBIN}/mockery --filename impl_mock.go --name Impl
 type Impl interface {
 	ListCart(ctx context.Context, user int64) ([]*domain.CartItem, error)
 	Purchase(ctx context.Context, user int64) (int64, error)

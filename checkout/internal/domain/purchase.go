@@ -7,14 +7,14 @@ import (
 )
 
 func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
-	cart, err := m.ListCart(ctx, user)
+	cart, err := m.cartItems.ListCart(ctx, user)
 	log.Printf("Checkout.ListCart: %+v", cart)
 	if err != nil {
 		return 0, err
 	}
 
-	items := make([]cliloms.RequestCreateOrderItem, 0, len(cart))
-	for _, item := range cart {
+	items := make([]cliloms.RequestCreateOrderItem, 0, len(cart.Items))
+	for _, item := range cart.Items {
 		items = append(items, cliloms.RequestCreateOrderItem{
 			SKU:   item.SKU,
 			Count: uint64(item.Count),
