@@ -158,6 +158,8 @@ done
 wait
 ```
 
+Клиент для просмотра топиков Kafka – [Offset Explorer](https://www.kafkatool.com/download.html)
+
 Настройка Telegram бота:
 1. получить [токен](https://core.telegram.org/bots/tutorial#getting-ready) для бота;
 2. разрешить общение с ботом (нужно найти в Телеграме созданного бота и нажать кнопку `Start`);
