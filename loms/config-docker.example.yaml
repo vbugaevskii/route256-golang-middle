@@ -1,0 +1,17 @@
+port:
+  grpc: 8081
+  http: 8091
+
+postgres:
+  host: "loms-postgres-db"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  database: "loms"
+
+kafka:
+  brokers:
+    - "kafka1:29091"
+    - "kafka2:29092"
+    - "kafka3:29093"
+  topic: "notifications"

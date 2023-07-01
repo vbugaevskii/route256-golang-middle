@@ -65,6 +65,6 @@ func (p *ConfigPostgres) URL() string {
 	builder.WriteString(strconv.Itoa(p.Port))
 	builder.WriteRune('/')
 	builder.WriteString(p.Database)
-	builder.WriteString("?sslmode=disable")
+	builder.WriteString("?sslmode=disable&statement_cache_mode=describe")
 	return builder.String()
 }

@@ -52,6 +52,7 @@ func main() {
 	}()
 
 	<-group.Ready()
+	log.Println("service ready to listen to kafka")
 
 	for order := range group.Subscribe() {
 		msg := tgbotapi.NewMessage(

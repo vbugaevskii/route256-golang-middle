@@ -4,9 +4,9 @@ port:
 
 kafka:
   brokers:
-    - "127.0.0.1:9091"
-    - "127.0.0.1:9092"
-    - "127.0.0.1:9093"
+    - "kafka1:29091"
+    - "kafka2:29092"
+    - "kafka3:29093"
   topic: "notifications"
   group: "group-dev"
 
