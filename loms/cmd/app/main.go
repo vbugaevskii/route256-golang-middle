@@ -5,13 +5,13 @@ import (
 	"log"
 	"net"
 	"net/http"
+	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
 	"route256/loms/internal/repository/postgres/orders"
 	"route256/loms/internal/repository/postgres/ordersreservations"
 	"route256/loms/internal/repository/postgres/stocks"
-	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/pkg/loms"
 	"strconv"
 
@@ -43,7 +43,12 @@ func main() {
 		orders.NewOrdersRepository(pool),
 		ordersreservations.NewOrdersReservationsRepository(pool),
 	)
-	go model.RunCancelOrderByTimeout(context.Background())
+	go func() {
+		err := model.RunCancelOrderByTimeout(context.Background())
+		if err != nil {
+			log.Fatalf("failed to cancel order by timeout: %v", err)
+		}
+	}()
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {

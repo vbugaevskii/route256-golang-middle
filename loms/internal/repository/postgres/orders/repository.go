@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
-	"route256/loms/internal/repository/postgres/tx"
 	"route256/loms/internal/repository/schema"
 	"time"
 

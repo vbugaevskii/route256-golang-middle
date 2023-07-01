@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"route256/loms/internal/repository/postgres/tx"
+	tx "route256/libs/txmanager/postgres"
 	"time"
 )
 

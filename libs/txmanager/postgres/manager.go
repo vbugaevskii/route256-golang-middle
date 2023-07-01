@@ -1,4 +1,4 @@
-package tx
+package postgres
 
 import (
 	"context"

@@ -95,3 +95,16 @@ func (cli *LomsService) CreateOrder(
 	}
 	return res, nil
 }
+
+func (cli *LomsService) CancelOrder(ctx context.Context, orderId int64) error {
+	reqProto := pbloms.RequestCancelOrder{
+		OrderID: orderId,
+	}
+
+	_, err := cli.client.CancelOrder(ctx, &reqProto)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
