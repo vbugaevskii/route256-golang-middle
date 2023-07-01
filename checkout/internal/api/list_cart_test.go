@@ -52,7 +52,6 @@ func TestListCart(t *testing.T) {
 
 		// Assert
 		require.NoError(t, err)
-		require.Len(t, result.Items, len(cartItems), "len(result.Items) != len(cartItems)")
 		require.Equal(t, expected, result)
 	})
 
