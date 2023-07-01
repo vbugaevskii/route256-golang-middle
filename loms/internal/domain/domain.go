@@ -436,14 +436,13 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 			}
 
 			for _, order := range orders {
-				err = m.producer.SendOrderStatus(order)
-				if err != nil {
-					return err
-				}
-
-				err = m.notifications.SetNotificationDelivered(ctx, order.RecordId)
-				if err != nil {
-					return err
+				if err = m.producer.SendOrderStatus(order); err == nil {
+					err = m.notifications.SetNotificationDelivered(ctx, order.RecordId)
+					if err != nil {
+						return err
+					}
+				} else {
+					log.Printf("failed to write message to kafka: %v\n", err)
 				}
 			}
 
