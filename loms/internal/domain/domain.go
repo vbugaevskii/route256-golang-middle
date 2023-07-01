@@ -8,10 +8,6 @@ import (
 	"time"
 )
 
-type KafkaProducer interface {
-	SendOrderStatus(orderId int64, status string) error
-}
-
 type StocksRepository interface {
 	ListStocks(ctx context.Context, sku uint32) ([]StocksItem, error)
 	RemoveStocks(ctx context.Context, sku uint32, item StocksItem) error
@@ -31,10 +27,29 @@ type OrdersReservationsRepository interface {
 	DeleteOrderReservations(ctx context.Context, orderId int64) error
 }
 
+type KafkaProducer interface {
+	SendOrderStatus(message Notification) error
+}
+
+type Notification struct {
+	RecordId  int64      `json:"record_id"`
+	OrderId   int64      `json:"order_id"`
+	Status    StatusType `json:"status"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+type NotificationsOutboxRepository interface {
+	CreateNotification(ctx context.Context, orderId int64, status StatusType) (int64, error)
+	SetNotificationDelivered(ctx context.Context, recordId int64) error
+	ListNotificationsWaiting(ctx context.Context) ([]Notification, error)
+	DeleteNotificationsDelivered(ctx context.Context) error
+}
+
 type Model struct {
 	txManager *tx.Manager
 
-	producer KafkaProducer
+	producer      KafkaProducer
+	notifications NotificationsOutboxRepository
 
 	stocks       StocksRepository
 	orders       OrdersRepository
@@ -44,13 +59,17 @@ type Model struct {
 func NewModel(
 	txManager *tx.Manager,
 	producer KafkaProducer,
+	notifications NotificationsOutboxRepository,
 	stocks StocksRepository,
 	orders OrdersRepository,
 	reservations OrdersReservationsRepository,
 ) *Model {
 	return &Model{
-		txManager:    txManager,
-		producer:     producer,
+		txManager: txManager,
+
+		producer:      producer,
+		notifications: notifications,
+
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
@@ -192,8 +211,8 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
-		if err = m.producer.SendOrderStatus(orderId, string(StatusNew)); err != nil {
-			log.Printf("Producer.SendOrderStatus FAILED: %v\n", err)
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusNew); err != nil {
+			log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
 		}
 
 		defer func() {
@@ -205,8 +224,8 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
 			}
 
-			if err = m.producer.SendOrderStatus(orderId, string(StatusFailed)); err != nil {
-				log.Printf("Producer.SendOrderStatus FAILED: %v\n", err)
+			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
+				log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
 			}
 		}()
 
@@ -259,8 +278,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
-		err = m.producer.SendOrderStatus(orderId, string(StatusAwaitingPayment))
-		if err != nil {
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusAwaitingPayment); err != nil {
 			return err
 		}
 
@@ -301,8 +319,7 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 			return err
 		}
 
-		err = m.producer.SendOrderStatus(orderId, string(StatusCancelled))
-		if err != nil {
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusCancelled); err != nil {
 			return err
 		}
 
@@ -314,34 +331,6 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	}
 
 	return nil
-}
-
-func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
-	ticker := time.NewTicker(time.Minute)
-
-	for {
-		select {
-		case <-ticker.C:
-			orders, err := m.orders.ListOrderOutdated(ctx)
-			if err != nil {
-				return err
-			}
-
-			if orders == nil {
-				continue
-			}
-
-			for _, order := range orders {
-				err = m.CancelOrder(ctx, order.OrderId)
-				if err != nil {
-					return err
-				}
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
 
 func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
@@ -388,8 +377,7 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 			return err
 		}
 
-		err = m.producer.SendOrderStatus(orderId, string(StatusPayed))
-		if err != nil {
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusPayed); err != nil {
 			return err
 		}
 
@@ -401,4 +389,71 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 	}
 
 	return nil
+}
+
+func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+		select {
+		case <-ticker.C:
+			orders, err := m.orders.ListOrderOutdated(ctx)
+			if err != nil {
+				return err
+			}
+
+			if orders == nil {
+				continue
+			}
+
+			for _, order := range orders {
+				err = m.CancelOrder(ctx, order.OrderId)
+				if err != nil {
+					return err
+				}
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (m *Model) RunNotificationsSender(ctx context.Context) error {
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+		select {
+		case <-ticker.C:
+			orders, err := m.notifications.ListNotificationsWaiting(ctx)
+			log.Printf("Notifications.ListNotificationsWaiting: %+v\n", orders)
+			if err != nil {
+				return err
+			}
+
+			if orders == nil {
+				continue
+			}
+
+			for _, order := range orders {
+				err = m.producer.SendOrderStatus(order)
+				if err != nil {
+					return err
+				}
+
+				err = m.notifications.SetNotificationDelivered(ctx, order.RecordId)
+				if err != nil {
+					return err
+				}
+			}
+
+			err = m.notifications.DeleteNotificationsDelivered(ctx)
+			if err != nil {
+				return err
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

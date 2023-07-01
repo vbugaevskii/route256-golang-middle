@@ -57,7 +57,7 @@ func main() {
 	for order := range group.Subscribe() {
 		msg := tgbotapi.NewMessage(
 			config.AppConfig.Telegram.ChatId,
-			fmt.Sprintf("OrderId = %d; Status = %s", order.OrderId, order.Status),
+			fmt.Sprintf("[%v] OrderId = %d; Status = %s", order.CreatedAt, order.OrderId, order.Status),
 		)
 		if _, err := bot.Send(msg); err != nil {
 			log.Printf("failed to send message %v\n", err)

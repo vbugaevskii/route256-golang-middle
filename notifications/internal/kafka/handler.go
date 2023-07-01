@@ -3,13 +3,15 @@ package kafka
 import (
 	"encoding/json"
 	"log"
+	"time"
 
 	"github.com/Shopify/sarama"
 )
 
 type Order struct {
-	OrderId int64  `json:"order_id"`
-	Status  string `json:"status"`
+	OrderId   int64     `json:"order_id"`
+	Status    string    `json:"status"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type ConsumerGroupHandler struct {

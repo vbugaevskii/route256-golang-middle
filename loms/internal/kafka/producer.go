@@ -3,12 +3,8 @@ package kafka
 import (
 	"fmt"
 	"route256/libs/kafka"
+	"route256/loms/internal/domain"
 )
-
-type Order struct {
-	OrderId int64  `json:"order_id"`
-	Status  string `json:"status"`
-}
 
 type Producer struct {
 	*kafka.Producer
@@ -22,11 +18,8 @@ func NewProducer(brokers []string, topic string) (*Producer, error) {
 	return &Producer{producer}, nil
 }
 
-func (p *Producer) SendOrderStatus(orderId int64, status string) error {
-	msg, err := p.BuildMessage(fmt.Sprint(orderId), Order{
-		OrderId: orderId,
-		Status:  status,
-	})
+func (p *Producer) SendOrderStatus(message domain.Notification) error {
+	msg, err := p.BuildMessage(fmt.Sprint(message.OrderId), message)
 	if err != nil {
 		return err
 	}
