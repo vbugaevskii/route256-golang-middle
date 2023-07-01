@@ -102,7 +102,7 @@ build-proto: install-grpc ${PROTODIR}/googleapis $(shell find ${PROTODIR} -name 
 		--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 		${PROTODIR}/product/product.proto
 
-build-mocks:
+build-mocks: install-mockery
 	GOBIN=${BINDIR} go generate ./...
 
 migration-up:
