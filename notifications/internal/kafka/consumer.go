@@ -35,5 +35,6 @@ func (cg *ConsumerGroup) Subscribe() <-chan Order {
 }
 
 func (cg *ConsumerGroup) Close() error {
+	cg.handler.Close()
 	return cg.group.Close()
 }

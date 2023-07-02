@@ -35,13 +35,20 @@ func (h *ConsumerGroupHandler) Subscribe() <-chan Order {
 }
 
 func (h *ConsumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error {
+	log.Println("setup handler")
 	close(h.ready)
+	h.ready = nil
 	return nil
 }
 
 func (h *ConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error {
-	close(h.output)
+	log.Println("cleanup handler")
+	h.ready = make(chan bool)
 	return nil
+}
+
+func (h *ConsumerGroupHandler) Close() {
+	close(h.output)
 }
 
 func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
