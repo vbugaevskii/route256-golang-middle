@@ -133,7 +133,7 @@ func (r *Repository) DeleteNotificationsDelivered(ctx context.Context) error {
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query for DeleteNotificationsDelivered: %s", err)
+		return fmt.Errorf("exec query DeleteNotificationsDelivered: %s", err)
 	}
 
 	return nil
