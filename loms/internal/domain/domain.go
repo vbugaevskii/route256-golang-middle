@@ -222,10 +222,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
 				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
+				return
 			}
 
 			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
 				log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
+				return
 			}
 		}()
 
