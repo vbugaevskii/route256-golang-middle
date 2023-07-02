@@ -8,14 +8,12 @@ import (
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
-
 	"route256/loms/internal/repository/schema"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
-
-	sq "github.com/Masterminds/squirrel"
 )
 
 type Repository struct {
