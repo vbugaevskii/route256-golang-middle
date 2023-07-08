@@ -3,7 +3,7 @@ package orders
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
@@ -44,8 +44,8 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 		return domain.Order{}, fmt.Errorf("build query ListOrder: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	row := r.GetQuerier(ctx).QueryRow(ctx, queryRaw, queryArgs...)
 
@@ -69,8 +69,8 @@ func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, erro
 		return 0, fmt.Errorf("build query CreateOrder: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	row := r.GetQuerier(ctx).QueryRow(ctx, queryRaw, queryArgs...)
 
@@ -93,8 +93,8 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, statu
 		return fmt.Errorf("build query UpdateOrderStatus: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -116,8 +116,8 @@ func (r *Repository) ListOrderOutdated(ctx context.Context) ([]domain.Order, err
 		return nil, fmt.Errorf("build query ListOrder: %s", err)
 	}
 
-	// log.Printf("SQL: %s\n", queryRaw)
-	// log.Printf("SQL: %+v\n", queryArgs)
+	// logger.Debugf("SQL: %s\n", queryRaw)
+	// logger.Debugf("SQL: %+v\n", queryArgs)
 
 	var ordersSchema []schema.Order
 	if err := pgxscan.Select(ctx, r.GetQuerier(ctx), &ordersSchema, queryRaw, queryArgs...); err != nil {

@@ -19,6 +19,8 @@ type Config struct {
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
 
+	LogLevel string `yaml:"loglevel"`
+
 	Kafka ConfigKafka `yaml:"kafka"`
 
 	Telegram struct {

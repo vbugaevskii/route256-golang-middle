@@ -3,8 +3,8 @@ package cartitems
 import (
 	"context"
 	"fmt"
-	"log"
 	"route256/checkout/internal/repository/schema"
+	"route256/libs/logger"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
@@ -51,8 +51,8 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 		return fmt.Errorf("build query AddToCart: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -72,8 +72,8 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 		return fmt.Errorf("build query DeleteFromCart: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -95,8 +95,8 @@ func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart
 		return ResponseListCart{}, fmt.Errorf("build query ListCart: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	var result []schema.CartItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
@@ -118,8 +118,8 @@ func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
 		return fmt.Errorf("build query DeleteCart: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {

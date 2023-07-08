@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
 	"route256/notifications/internal/config"
 	"route256/notifications/internal/kafka"
 	"sync"
@@ -14,12 +14,14 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		log.Fatalf("config init: %v", err)
+		logger.Fatalf("config init: %v", err)
 	}
+
+	logger.Init(config.AppConfig.LogLevel)
 
 	bot, err := tgbotapi.NewBotAPI(config.AppConfig.Telegram.Token)
 	if err != nil {
-		log.Panic(err)
+		logger.Fatalf("telegram bot init: %v", err)
 	}
 	bot.Debug = true
 
@@ -30,12 +32,12 @@ func main() {
 	)
 	defer func() {
 		if err = group.Close(); err != nil {
-			log.Fatalf("kafka consumer close: %v", err)
+			logger.Fatalf("kafka consumer close: %v", err)
 		}
 	}()
 
 	if err != nil {
-		log.Fatalf("kafka consumer init: %v", err)
+		logger.Fatalf("kafka consumer init: %v", err)
 	}
 
 	wg := &sync.WaitGroup{}
@@ -46,13 +48,13 @@ func main() {
 
 		for {
 			if err := group.Consume(context.Background()); err != nil {
-				log.Fatalf("kafka consumer read: %v", err)
+				logger.Fatalf("kafka consumer read: %v", err)
 			}
 		}
 	}()
 
 	<-group.Ready()
-	log.Println("service ready to listen to kafka")
+	logger.Info("service ready to listen to kafka")
 
 	for order := range group.Subscribe() {
 		msg := tgbotapi.NewMessage(
@@ -60,7 +62,7 @@ func main() {
 			fmt.Sprintf("[%v] OrderId = %d; Status = %s", order.CreatedAt, order.OrderId, order.Status),
 		)
 		if _, err := bot.Send(msg); err != nil {
-			log.Printf("failed to send message %v\n", err)
+			logger.Infof("failed to send message %v", err)
 		}
 	}
 

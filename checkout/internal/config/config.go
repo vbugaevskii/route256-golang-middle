@@ -29,6 +29,8 @@ type Config struct {
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
 
+	LogLevel string `yaml:"loglevel"`
+
 	Services struct {
 		Loms           ConfigService `yaml:"loms"`
 		ProductService ConfigService `yaml:"product_service"`

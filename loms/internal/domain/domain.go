@@ -3,7 +3,7 @@ package domain
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"time"
 )
@@ -108,13 +108,13 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 		)
 
 		order, err = m.orders.ListOrder(ctxTx, orderId)
-		log.Printf("Orders.ListOrder: %+v\n", order)
+		logger.Infof("Orders.ListOrder: %+v\n", order)
 		if err != nil {
 			return err
 		}
 
 		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
-		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+		logger.Infof("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 		)
 
 		stocksResevered, err = m.reservations.ListSkuReservations(ctxTx, sku)
-		log.Printf("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
+		logger.Infof("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
 		if err != nil {
 			return err
 		}
@@ -168,7 +168,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 		}
 
 		stocks, err = m.stocks.ListStocks(ctxTx, sku)
-		log.Printf("Stocks.ListStocks: %+v\n", stocks)
+		logger.Infof("Stocks.ListStocks: %+v\n", stocks)
 		if err != nil {
 			return err
 		}
@@ -181,7 +181,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 				stocks[i].Count -= cnt
 			}
 		}
-		log.Printf("Stocks.ListStocks: %+v\n modified", stocks)
+		logger.Infof("Stocks.ListStocks: %+v\n modified", stocks)
 
 		return nil
 	})
@@ -206,13 +206,13 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		var err error
 
 		orderId, err = m.orders.CreateOrder(ctxTx, userId)
-		log.Printf("Orders.CreateOrder: %+v\n", orderId)
+		logger.Infof("Orders.CreateOrder: %+v\n", orderId)
 		if err != nil {
 			return err
 		}
 
 		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusNew); err != nil {
-			log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
+			logger.Infof("Notifications.CreateNotification FAILED: %v\n", err)
 		}
 
 		defer func() {
@@ -221,12 +221,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			}
 
 			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
-				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
+				logger.Infof("Orders.UpdateOrderStatus FAILED: %v\n", err)
 				return
 			}
 
 			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
-				log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
+				logger.Infof("Notifications.CreateNotification FAILED: %v\n", err)
 				return
 			}
 		}()
@@ -236,7 +236,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			var stocks []StocksItem // to make defer work
 
 			stocks, err = m.stocks.ListStocks(ctxTx, item.Sku)
-			log.Printf("Stocks.ListStocks: %+v\n", stocks)
+			logger.Infof("Stocks.ListStocks: %+v\n", stocks)
 			if err != nil {
 				return err
 			}
@@ -302,7 +302,7 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 		)
 
 		order, err = m.orders.ListOrder(ctxTx, orderId)
-		log.Printf("Orders.ListOrder: %+v\n", order)
+		logger.Infof("Orders.ListOrder: %+v\n", order)
 		if err != nil {
 			return err
 		}
@@ -354,7 +354,7 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 		}
 
 		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
-		log.Printf("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+		logger.Infof("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
 		if err != nil {
 			return err
 		}
@@ -428,7 +428,7 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			orders, err := m.notifications.ListNotificationsWaiting(ctx)
-			log.Printf("Notifications.ListNotificationsWaiting: %+v\n", orders)
+			logger.Infof("Notifications.ListNotificationsWaiting: %+v\n", orders)
 			if err != nil {
 				return err
 			}
@@ -444,7 +444,7 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 						return err
 					}
 				} else {
-					log.Printf("failed to write message to kafka: %v\n", err)
+					logger.Infof("failed to write message to kafka: %v\n", err)
 				}
 			}
 

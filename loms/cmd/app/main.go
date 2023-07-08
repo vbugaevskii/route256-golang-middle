@@ -2,9 +2,9 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
+	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
@@ -27,15 +27,17 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		log.Fatalln("config init", err)
+		logger.Fatal("config init", err)
 	}
+
+	logger.Init(config.AppConfig.LogLevel)
 
 	pool, err := pgxpool.Connect(
 		context.Background(),
 		config.AppConfig.Postgres.URL(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to db: %v", err)
+		logger.Fatalf("failed to connect to db: %v", err)
 	}
 	defer pool.Close()
 
@@ -44,7 +46,7 @@ func main() {
 		config.AppConfig.Kafka.Topic,
 	)
 	if err != nil {
-		log.Fatalf("failed to create kafka producer: %v", err)
+		logger.Fatalf("failed to create kafka producer: %v", err)
 	}
 	defer producer.Close()
 
@@ -59,30 +61,30 @@ func main() {
 	go func() {
 		err := model.RunCancelOrderByTimeout(context.Background())
 		if err != nil {
-			log.Fatalf("failed to cancel order by timeout: %v", err)
+			logger.Fatalf("failed to cancel order by timeout: %v", err)
 		}
 	}()
 	go func() {
 		err := model.RunNotificationsSender(context.Background())
 		if err != nil {
-			log.Fatalf("failed to send notifications: %v", err)
+			logger.Fatalf("failed to send notifications: %v", err)
 		}
 	}()
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
 	loms.RegisterLomsServer(grpcServer, api.NewService(model))
 
-	log.Printf("server listening at %v", lis.Addr())
+	logger.Infof("server listening at %v", lis.Addr())
 
 	go func() {
 		if err = grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			logger.Fatalf("failed to serve: %v", err)
 		}
 	}()
 
@@ -97,13 +99,13 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
+		logger.Fatalf("Failed to dial server: %v", err)
 	}
 
 	mux := runtime.NewServeMux()
 	err = loms.RegisterLomsHandler(context.Background(), mux, conn)
 	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
+		logger.Fatalf("Failed to register gateway: %v", err)
 	}
 
 	httpServer := &http.Server{
@@ -111,6 +113,6 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
-	log.Fatalln(httpServer.ListenAndServe())
+	logger.Infof("Serving gRPC-Gateway on: %d", config.AppConfig.Port.HTTP)
+	logger.Fatal(httpServer.ListenAndServe())
 }

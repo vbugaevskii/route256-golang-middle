@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"route256/checkout/internal/api"
@@ -12,6 +11,7 @@ import (
 	"route256/checkout/internal/domain"
 	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
+	"route256/libs/logger"
 	"strconv"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -24,15 +24,17 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		log.Fatalln("config init", err)
+		logger.Fatal("config init", err)
 	}
+
+	logger.Init(config.AppConfig.LogLevel)
 
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to server: %v", err)
+		logger.Fatalf("failed to connect to server: %v", err)
 	}
 	defer connLoms.Close()
 
@@ -41,7 +43,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to server: %v", err)
+		logger.Fatalf("failed to connect to server: %v", err)
 	}
 	defer connProduct.Close()
 
@@ -50,7 +52,7 @@ func main() {
 		config.AppConfig.Postgres.URL(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to db: %v", err)
+		logger.Fatalf("failed to connect to db: %v", err)
 	}
 	defer pool.Close()
 
@@ -66,18 +68,18 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Fatalf("failed to listen: %v", err)
 	}
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
 	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 
-	log.Printf("server listening at %v", lis.Addr())
+	logger.Infof("server listening at %v", lis.Addr())
 
 	go func() {
 		if err = grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			logger.Fatalf("failed to serve: %v", err)
 		}
 	}()
 
@@ -92,13 +94,13 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
+		logger.Fatalf("Failed to dial server: %v", err)
 	}
 
 	mux := runtime.NewServeMux()
 	err = checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
 	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
+		logger.Fatalf("Failed to register gateway: %v", err)
 	}
 
 	httpServer := &http.Server{
@@ -106,6 +108,6 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
-	log.Fatalln(httpServer.ListenAndServe())
+	logger.Infof("Serving gRPC-Gateway on: %d", config.AppConfig.Port.HTTP)
+	logger.Fatal(httpServer.ListenAndServe())
 }

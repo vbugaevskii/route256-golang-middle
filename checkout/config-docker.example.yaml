@@ -2,6 +2,8 @@ port:
   grpc: 8080
   http: 8090
 
+loglevel: "info"
+
 services:
   loms:
     netloc: "localhost:8081"

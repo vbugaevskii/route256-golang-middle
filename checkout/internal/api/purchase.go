@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
-	"log"
 	"route256/checkout/pkg/checkout"
+	"route256/libs/logger"
 )
 
 func (s *Service) Purchase(ctx context.Context, req *checkout.RequestPurchase) (*checkout.ResponsePurchase, error) {
-	log.Printf("%+v", req)
+	logger.Infof("%+v", req)
 
 	if req.User == 0 {
 		return nil, ErrUserNotFound

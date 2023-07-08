@@ -28,6 +28,8 @@ type Config struct {
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
 
+	LogLevel string `yaml:"loglevel"`
+
 	Postgres ConfigPostgres `yaml:"postgres"`
 	Kafka    ConfigKafka    `yaml:"kafka"`
 }

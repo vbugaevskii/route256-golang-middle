@@ -3,7 +3,7 @@ package ordersreservations
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
@@ -42,8 +42,8 @@ func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) (
 		return nil, fmt.Errorf("build query ListOrderReservations: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
@@ -73,8 +73,8 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 		return fmt.Errorf("build query InsertOrderReservations: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -96,8 +96,8 @@ func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]dom
 		return nil, fmt.Errorf("build query for ListSkuReservations: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
@@ -118,8 +118,8 @@ func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64)
 		return fmt.Errorf("build query DeleteOrderReservations: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {

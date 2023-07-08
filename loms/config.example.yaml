@@ -2,6 +2,8 @@ port:
   grpc: 8081
   http: 8091
 
+loglevel: "info"
+
 postgres:
   host: "localhost"
   port: 5434

@@ -3,7 +3,7 @@ package stocks
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
@@ -42,8 +42,8 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 		return nil, fmt.Errorf("build query stocks.Stocks: %s", err)
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s\n", queryRaw)
+	logger.Debugf("SQL: %+v\n", queryArgs)
 
 	var result []schema.StocksItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)

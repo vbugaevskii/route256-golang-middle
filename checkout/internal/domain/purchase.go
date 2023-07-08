@@ -2,13 +2,13 @@ package domain
 
 import (
 	"context"
-	"log"
 	cliloms "route256/checkout/internal/clients/loms"
+	"route256/libs/logger"
 )
 
 func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 	cart, err := m.cartItems.ListCart(ctx, user)
-	log.Printf("Checkout.ListCart: %+v", cart)
+	logger.Infof("Checkout.ListCart: %+v", cart)
 	if err != nil {
 		return 0, err
 	}
@@ -22,7 +22,7 @@ func (m *Model) Purchase(ctx context.Context, user int64) (int64, error) {
 	}
 
 	res, err := m.loms.CreateOrder(ctx, user, items)
-	log.Printf("LOMS.CreateOrder: %+v", res)
+	logger.Infof("LOMS.CreateOrder: %+v", res)
 	if err != nil {
 		return 0, err
 	}
