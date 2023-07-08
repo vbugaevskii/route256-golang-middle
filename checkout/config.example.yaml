@@ -4,6 +4,9 @@ port:
   grpc: 8080
   http: 8090
 
+metrics:
+  port: 8070
+
 loglevel: "info"
 
 services:

@@ -30,6 +30,10 @@ type Config struct {
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
 
+	Metrics struct {
+		Port int `yaml:"port"`
+	}
+
 	LogLevel string `yaml:"loglevel"`
 
 	Postgres ConfigPostgres `yaml:"postgres"`

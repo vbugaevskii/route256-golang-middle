@@ -180,3 +180,6 @@ wait
 4. настроить конфиг для сервиса `notifications`.
 
 Смотрелка Jaeger: http://localhost:16686
+Проверить, что шлются метрики:
+- http://localhost:8070/metrics
+- http://localhost:9090/targets

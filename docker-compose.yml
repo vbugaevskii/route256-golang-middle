@@ -17,6 +17,8 @@ services:
     build: ./checkout/
     ports:
       - "8080:8080"
+      - "8090:8090"
+      - "8070:8070"
     environment:
       - JAEGER_SERVICE_NAME=checkout
       - JAEGER_AGENT_HOST=jaeger
@@ -33,6 +35,8 @@ services:
     build: ./loms/
     ports:
       - "8081:8081"
+      - "8091:8091"
+      - "8071:8071"
     environment:
       - JAEGER_SERVICE_NAME=loms
       - JAEGER_AGENT_HOST=jaeger
@@ -215,5 +219,30 @@ services:
       - "16686:16686"
       - "14268:14268"
       - "9411:9411"
+    networks:
+      - net
+  
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./infra/prometheus/alerts.yaml:/etc/prometheus/alerts.yml
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    networks:
+      - net
+
+  grafana:
+    image: grafana/grafana-oss
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./infra/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasource.yaml:ro
+      - ./infra/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./infra/grafana/dashboards:/opt/grafana/dashboards
+    links:
+      - prometheus
     networks:
       - net

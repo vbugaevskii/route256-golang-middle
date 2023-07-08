@@ -12,10 +12,12 @@ import (
 	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
 	"route256/libs/logger"
+	"route256/libs/metrics"
 	"route256/libs/tracing"
 	"strconv"
 
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -34,6 +36,7 @@ func main() {
 
 	logger.Init(config.AppConfig.LogLevel)
 	tracing.Init(config.AppConfig.Name)
+	metrics.Init(config.AppConfig.Name)
 
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
@@ -81,13 +84,22 @@ func main() {
 		grpc.UnaryInterceptor(
 			middleware.ChainUnaryServer(
 				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+				metrics.ServerMetricsInterceptor,
 				logger.LoggingInterceptor,
 			),
 		),
 	)
 	reflection.Register(grpcServer)
-	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 
+	prometheus.Register(grpcServer)
+	go func() {
+		err := metrics.ListenAndServeMetrics(config.AppConfig.Metrics.Port)
+		if err != nil {
+			logger.Fatal("failed to serve metrics", zap.Error(err))
+		}
+	}()
+
+	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 	logger.Infof("server listening at %v", lis.Addr())
 
 	go func() {

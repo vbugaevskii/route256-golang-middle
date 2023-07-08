@@ -1,0 +1,12 @@
+# config file version
+apiVersion: 1
+
+# list of datasources to insert/update
+# available in the database
+datasources:
+  - name: prometheus-dev
+    uid: prometheus-dev
+    type: prometheus
+    access: proxy
+    url: http://host.docker.internal:9090
+    basicAuth: false

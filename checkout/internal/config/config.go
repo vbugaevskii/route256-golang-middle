@@ -33,6 +33,10 @@ type Config struct {
 
 	LogLevel string `yaml:"loglevel"`
 
+	Metrics struct {
+		Port int `yaml:"port"`
+	}
+
 	Services struct {
 		Loms           ConfigService `yaml:"loms"`
 		ProductService ConfigService `yaml:"product_service"`
