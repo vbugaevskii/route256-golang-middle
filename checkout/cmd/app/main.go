@@ -16,6 +16,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -24,7 +25,7 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		logger.Fatal("config init", err)
+		logger.Fatal("config init", zap.Error(err))
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
@@ -34,7 +35,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Fatalf("failed to connect to server: %v", err)
+		logger.Fatal("failed to connect to server", zap.Error(err))
 	}
 	defer connLoms.Close()
 
@@ -43,7 +44,7 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Fatalf("failed to connect to server: %v", err)
+		logger.Fatal("failed to connect to server", zap.Error(err))
 	}
 	defer connProduct.Close()
 
@@ -52,7 +53,7 @@ func main() {
 		config.AppConfig.Postgres.URL(),
 	)
 	if err != nil {
-		logger.Fatalf("failed to connect to db: %v", err)
+		logger.Fatal("failed to connect to db", zap.Error(err))
 	}
 	defer pool.Close()
 
@@ -68,7 +69,7 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
-		logger.Fatalf("failed to listen: %v", err)
+		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
 	grpcServer := grpc.NewServer()
@@ -79,7 +80,7 @@ func main() {
 
 	go func() {
 		if err = grpcServer.Serve(lis); err != nil {
-			logger.Fatalf("failed to serve: %v", err)
+			logger.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
 
@@ -94,13 +95,13 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.Fatalf("Failed to dial server: %v", err)
+		logger.Fatal("failed to dial server", zap.Error(err))
 	}
 
 	mux := runtime.NewServeMux()
 	err = checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
 	if err != nil {
-		logger.Fatalf("Failed to register gateway: %v", err)
+		logger.Fatal("failed to register gateway", zap.Error(err))
 	}
 
 	httpServer := &http.Server{
@@ -109,5 +110,5 @@ func main() {
 	}
 
 	logger.Infof("Serving gRPC-Gateway on: %d", config.AppConfig.Port.HTTP)
-	logger.Fatal(httpServer.ListenAndServe())
+	logger.Fatal("failed to serve http", zap.Error(httpServer.ListenAndServe()))
 }

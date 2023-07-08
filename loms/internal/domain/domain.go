@@ -6,6 +6,8 @@ import (
 	"route256/libs/logger"
 	tx "route256/libs/txmanager/postgres"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 type StocksRepository interface {
@@ -212,7 +214,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		}
 
 		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusNew); err != nil {
-			logger.Infof("Notifications.CreateNotification FAILED: %v\n", err)
+			logger.Error("failed Notifications.CreateNotification", zap.Error(err))
 		}
 
 		defer func() {
@@ -221,12 +223,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			}
 
 			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
-				logger.Infof("Orders.UpdateOrderStatus FAILED: %v\n", err)
+				logger.Error("failed Orders.UpdateOrderStatus", zap.Error(err))
 				return
 			}
 
 			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
-				logger.Infof("Notifications.CreateNotification FAILED: %v\n", err)
+				logger.Error("failed Notifications.CreateNotification", zap.Error(err))
 				return
 			}
 		}()
@@ -444,7 +446,7 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 						return err
 					}
 				} else {
-					logger.Infof("failed to write message to kafka: %v\n", err)
+					logger.Error("failed to write message to kafka", zap.Error(err))
 				}
 			}
 

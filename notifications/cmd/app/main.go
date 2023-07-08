@@ -9,19 +9,20 @@ import (
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"go.uber.org/zap"
 )
 
 func main() {
 	err := config.Init()
 	if err != nil {
-		logger.Fatalf("config init: %v", err)
+		logger.Fatal("config init", zap.Error(err))
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
 
 	bot, err := tgbotapi.NewBotAPI(config.AppConfig.Telegram.Token)
 	if err != nil {
-		logger.Fatalf("telegram bot init: %v", err)
+		logger.Fatal("failed telegram bot init", zap.Error(err))
 	}
 	bot.Debug = true
 
@@ -32,12 +33,12 @@ func main() {
 	)
 	defer func() {
 		if err = group.Close(); err != nil {
-			logger.Fatalf("kafka consumer close: %v", err)
+			logger.Fatal("failed kafka consumer close", zap.Error(err))
 		}
 	}()
 
 	if err != nil {
-		logger.Fatalf("kafka consumer init: %v", err)
+		logger.Fatal("failed kafka consumer init", zap.Error(err))
 	}
 
 	wg := &sync.WaitGroup{}
@@ -48,7 +49,7 @@ func main() {
 
 		for {
 			if err := group.Consume(context.Background()); err != nil {
-				logger.Fatalf("kafka consumer read: %v", err)
+				logger.Fatal("failed kafka consumer read", zap.Error(err))
 			}
 		}
 	}()
