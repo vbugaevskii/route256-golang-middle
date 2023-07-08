@@ -1,3 +1,5 @@
+name: "loms"
+
 port:
   grpc: 8081
   http: 8091

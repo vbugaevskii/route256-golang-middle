@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"route256/libs/logger"
+	"route256/libs/tracing"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
@@ -17,8 +18,11 @@ import (
 	"route256/loms/pkg/loms"
 	"strconv"
 
+	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -32,6 +36,7 @@ func main() {
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
+	tracing.Init(config.AppConfig.Name)
 
 	pool, err := pgxpool.Connect(
 		context.Background(),
@@ -77,7 +82,13 @@ func main() {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			middleware.ChainUnaryServer(
+				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+			),
+		),
+	)
 	reflection.Register(grpcServer)
 	loms.RegisterLomsServer(grpcServer, api.NewService(model))
 

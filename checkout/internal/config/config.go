@@ -24,6 +24,8 @@ type ConfigPostgres struct {
 }
 
 type Config struct {
+	Name string `yaml:"name"`
+
 	Port struct {
 		GRPC int `yaml:"grpc"`
 		HTTP int `yaml:"http"`

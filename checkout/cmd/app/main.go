@@ -12,10 +12,14 @@ import (
 	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
 	"route256/libs/logger"
+	"route256/libs/tracing"
 	"strconv"
 
+	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -29,6 +33,7 @@ func main() {
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
+	tracing.Init(config.AppConfig.Name)
 
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
@@ -72,7 +77,13 @@ func main() {
 		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			middleware.ChainUnaryServer(
+				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+			),
+		),
+	)
 	reflection.Register(grpcServer)
 	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 

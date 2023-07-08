@@ -17,6 +17,11 @@ services:
     build: ./checkout/
     ports:
       - "8080:8080"
+    environment:
+      - JAEGER_SERVICE_NAME=checkout
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_MANAGER_HOST_PORT=jaeger:5778
     depends_on:
       - checkout-postgres-db
       - checkout-pgbouncer
@@ -28,6 +33,11 @@ services:
     build: ./loms/
     ports:
       - "8081:8081"
+    environment:
+      - JAEGER_SERVICE_NAME=loms
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - JAEGER_SAMPLER_MANAGER_HOST_PORT=jaeger:5778
     depends_on:
       loms-postgres-db:
         condition: service_started
@@ -192,5 +202,18 @@ services:
       - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
       - KAFKA_BROKER_ID=3
       - ZOOKEEPER=zookeeper:2181
+    networks:
+      - net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.18
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "9411:9411"
     networks:
       - net
