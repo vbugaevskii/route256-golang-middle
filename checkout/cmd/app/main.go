@@ -41,6 +41,10 @@ func main() {
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			metrics.ClientMetricsInterceptor,
+		),
 	)
 	if err != nil {
 		logger.Fatal("failed to connect to server", zap.Error(err))
@@ -50,6 +54,10 @@ func main() {
 	connProduct, err := grpc.Dial(
 		config.AppConfig.Services.ProductService.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			metrics.ClientMetricsInterceptor,
+		),
 	)
 	if err != nil {
 		logger.Fatal("failed to connect to server", zap.Error(err))
