@@ -17,15 +17,13 @@ var (
 )
 
 func Init(serviceName string) {
-	reg := prometheus.NewRegistry()
-
-	MetricRequestCounter = promauto.With(reg).NewCounter(prometheus.CounterOpts{
+	MetricRequestCounter = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "route256",
 		Subsystem: serviceName,
 		Name:      "server_request_counter",
 	})
 
-	MetricResponseCounter = promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+	MetricResponseCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "route256",
 		Subsystem: serviceName,
 		Name:      "server_response_counter",
@@ -33,7 +31,7 @@ func Init(serviceName string) {
 		[]string{"status"},
 	)
 
-	MetricResponseTimeHistogram = promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+	MetricResponseTimeHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "route256",
 		Subsystem: serviceName,
 		Name:      "server_response_time_seconds",
@@ -42,7 +40,7 @@ func Init(serviceName string) {
 		[]string{"status"},
 	)
 
-	MetricClientResponseTimeHistogram = promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+	MetricClientResponseTimeHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "route256",
 		Subsystem: serviceName,
 		Name:      "client_response_time_seconds",
