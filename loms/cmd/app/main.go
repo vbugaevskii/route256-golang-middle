@@ -86,6 +86,7 @@ func main() {
 		grpc.UnaryInterceptor(
 			middleware.ChainUnaryServer(
 				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+				logger.LoggingInterceptor,
 			),
 		),
 	)
