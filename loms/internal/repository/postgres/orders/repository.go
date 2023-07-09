@@ -98,7 +98,7 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, statu
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query orders.SetOrderStatus: %s", err)
+		return fmt.Errorf("exec query UpdateOrderStatus: %s", err)
 	}
 
 	return nil

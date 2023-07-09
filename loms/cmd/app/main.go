@@ -9,6 +9,8 @@ import (
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
 	"route256/loms/internal/domain"
+	"route256/loms/internal/kafka"
+	"route256/loms/internal/repository/postgres/notificationsoutbox"
 	"route256/loms/internal/repository/postgres/orders"
 	"route256/loms/internal/repository/postgres/ordersreservations"
 	"route256/loms/internal/repository/postgres/stocks"
@@ -37,8 +39,19 @@ func main() {
 	}
 	defer pool.Close()
 
+	producer, err := kafka.NewProducer(
+		config.AppConfig.Kafka.Brokers,
+		config.AppConfig.Kafka.Topic,
+	)
+	if err != nil {
+		log.Fatalf("failed to create kafka producer: %v", err)
+	}
+	defer producer.Close()
+
 	model := domain.NewModel(
 		tx.NewTxManager(pool),
+		producer,
+		notificationsoutbox.NewNotificationsOutboxRepository(pool),
 		stocks.NewStocksRepository(pool),
 		orders.NewOrdersRepository(pool),
 		ordersreservations.NewOrdersReservationsRepository(pool),
@@ -47,6 +60,12 @@ func main() {
 		err := model.RunCancelOrderByTimeout(context.Background())
 		if err != nil {
 			log.Fatalf("failed to cancel order by timeout: %v", err)
+		}
+	}()
+	go func() {
+		err := model.RunNotificationsSender(context.Background())
+		if err != nil {
+			log.Fatalf("failed to send notifications: %v", err)
 		}
 	}()
 

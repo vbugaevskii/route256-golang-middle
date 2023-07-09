@@ -3,15 +3,15 @@ port:
   http: 8091
 
 postgres:
-  host: "localhost"
-  port: 5434
+  host: "loms-postgres-db"
+  port: 5432
   user: "postgres"
   password: "password"
   database: "loms"
 
 kafka:
   brokers:
-    - "127.0.0.1:9091"
-    - "127.0.0.1:9092"
-    - "127.0.0.1:9093"
+    - "kafka1:29091"
+    - "kafka2:29092"
+    - "kafka3:29093"
   topic: "notifications"
