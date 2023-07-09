@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"route256/checkout/internal/repository/schema"
 	"route256/libs/logger"
+	"route256/libs/tracing"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
@@ -48,7 +49,7 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query AddToCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query AddToCart: %s", err))
 	}
 
 	logger.Debugf("SQL: %s", queryRaw)
@@ -56,7 +57,7 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query AddToCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query AddToCart: %s", err))
 	}
 
 	return nil
@@ -69,7 +70,7 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query DeleteFromCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query DeleteFromCart: %s", err))
 	}
 
 	logger.Debugf("SQL: %s", queryRaw)
@@ -77,7 +78,7 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query for DeleteFromCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query DeleteFromCart: %s", err))
 	}
 
 	return nil
@@ -92,7 +93,8 @@ func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return ResponseListCart{}, fmt.Errorf("build query ListCart: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("build query ListCart: %s", err))
+		return ResponseListCart{}, err
 	}
 
 	logger.Debugf("SQL: %s", queryRaw)
@@ -101,8 +103,10 @@ func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart
 	var result []schema.CartItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
 	if err != nil {
-		return ResponseListCart{}, fmt.Errorf("exec query ListCart: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query ListCart: %s", err))
+		return ResponseListCart{}, err
 	}
+
 	return ResponseListCart{
 		Items: ConvCartItemsSchemaDomain(result),
 	}, nil
@@ -115,7 +119,7 @@ func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query DeleteCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query DeleteCart: %s", err))
 	}
 
 	logger.Debugf("SQL: %s", queryRaw)
@@ -123,7 +127,7 @@ func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query for DeleteCart: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query DeleteCart: %s", err))
 	}
 
 	return nil
