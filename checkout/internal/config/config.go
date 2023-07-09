@@ -24,10 +24,18 @@ type ConfigPostgres struct {
 }
 
 type Config struct {
+	Name string `yaml:"name"`
+
 	Port struct {
 		GRPC int `yaml:"grpc"`
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
+
+	LogLevel string `yaml:"loglevel"`
+
+	Metrics struct {
+		Port int `yaml:"port"`
+	}
 
 	Services struct {
 		Loms           ConfigService `yaml:"loms"`

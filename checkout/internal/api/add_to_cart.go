@@ -2,14 +2,14 @@ package api
 
 import (
 	"context"
-	"log"
 	"route256/checkout/pkg/checkout"
+	"route256/libs/logger"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 func (s *Service) AddToCart(ctx context.Context, req *checkout.RequestAddToCart) (*emptypb.Empty, error) {
-	log.Printf("%+v", req)
+	logger.Infof("%+v", req)
 
 	if req.User == 0 {
 		return &emptypb.Empty{}, ErrUserNotFound

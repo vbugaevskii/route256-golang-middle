@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 2s
+  scrape_timeout: 2s
+  evaluation_interval: 1s
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+  - job_name: "checkout"
+    static_configs:
+      - targets:
+          - "host.docker.internal:8070"
+  - job_name: "loms"
+    static_configs:
+      - targets:
+          - "host.docker.internal:8071"

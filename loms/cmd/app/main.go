@@ -5,6 +5,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"route256/libs/logger"
+	"route256/libs/metrics"
+	"route256/libs/tracing"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/api"
 	"route256/loms/internal/config"
@@ -17,8 +20,13 @@ import (
 	"route256/loms/pkg/loms"
 	"strconv"
 
+	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -27,15 +35,25 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		log.Fatalln("config init", err)
+		logger.Fatal("config init", zap.Error(err))
 	}
+
+	logger.Init(config.AppConfig.LogLevel)
+	tracing.Init(config.AppConfig.Name)
+	metrics.Init(config.AppConfig.Name)
+
+	defer func() {
+		if err := tracing.Close(); err != nil {
+			logger.Fatal("failed to close tracer", zap.Error(err))
+		}
+	}()
 
 	pool, err := pgxpool.Connect(
 		context.Background(),
 		config.AppConfig.Postgres.URL(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to db: %v", err)
+		logger.Fatal("failed to connect to db", zap.Error(err))
 	}
 	defer pool.Close()
 
@@ -44,7 +62,7 @@ func main() {
 		config.AppConfig.Kafka.Topic,
 	)
 	if err != nil {
-		log.Fatalf("failed to create kafka producer: %v", err)
+		logger.Fatal("failed to create kafka producer", zap.Error(err))
 	}
 	defer producer.Close()
 
@@ -59,7 +77,13 @@ func main() {
 	go func() {
 		err := model.RunCancelOrderByTimeout(context.Background())
 		if err != nil {
-			log.Fatalf("failed to cancel order by timeout: %v", err)
+			logger.Fatal("failed to cancel order by timeout", zap.Error(err))
+		}
+	}()
+	go func() {
+		err := model.RunNotificationsSender(context.Background())
+		if err != nil {
+			logger.Fatal("failed to send notifications", zap.Error(err))
 		}
 	}()
 	go func() {
@@ -71,18 +95,34 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			middleware.ChainUnaryServer(
+				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+				metrics.ServerMetricsInterceptor,
+				logger.LoggingInterceptor,
+			),
+		),
+	)
 	reflection.Register(grpcServer)
-	loms.RegisterLomsServer(grpcServer, api.NewService(model))
 
-	log.Printf("server listening at %v", lis.Addr())
+	prometheus.Register(grpcServer)
+	go func() {
+		err := metrics.ListenAndServeMetrics(config.AppConfig.Metrics.Port)
+		if err != nil {
+			logger.Fatal("failed to serve metrics", zap.Error(err))
+		}
+	}()
+
+	loms.RegisterLomsServer(grpcServer, api.NewService(model))
+	logger.Infof("server listening at %v", lis.Addr())
 
 	go func() {
 		if err = grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			logger.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
 
@@ -97,13 +137,13 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
+		logger.Fatal("failed to dial server", zap.Error(err))
 	}
 
 	mux := runtime.NewServeMux()
 	err = loms.RegisterLomsHandler(context.Background(), mux, conn)
 	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
+		logger.Fatalf("failed to register gateway", zap.Error(err))
 	}
 
 	httpServer := &http.Server{
@@ -111,6 +151,6 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
-	log.Fatalln(httpServer.ListenAndServe())
+	logger.Infof("Serving gRPC-Gateway on: %d", config.AppConfig.Port.HTTP)
+	logger.Fatal("failed to serve http", zap.Error(httpServer.ListenAndServe()))
 }

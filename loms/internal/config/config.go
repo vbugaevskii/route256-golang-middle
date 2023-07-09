@@ -23,10 +23,18 @@ type ConfigKafka struct {
 }
 
 type Config struct {
+	Name string `yaml:"name"`
+
 	Port struct {
 		GRPC int `yaml:"grpc"`
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
+
+	Metrics struct {
+		Port int `yaml:"port"`
+	}
+
+	LogLevel string `yaml:"loglevel"`
 
 	Postgres ConfigPostgres `yaml:"postgres"`
 	Kafka    ConfigKafka    `yaml:"kafka"`

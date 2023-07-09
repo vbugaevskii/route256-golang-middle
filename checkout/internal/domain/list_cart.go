@@ -2,7 +2,7 @@ package domain
 
 import (
 	"context"
-	"log"
+	"route256/libs/logger"
 	wp "route256/libs/workerpool"
 )
 
@@ -17,7 +17,7 @@ const numProductWorkers = 5
 
 func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
 	cartItemsRepo, err := m.cartItems.ListCart(ctx, user)
-	log.Printf("CartItems.ListCart: %+v\n", cartItemsRepo)
+	logger.Infof("CartItems.ListCart: %+v", cartItemsRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func (m *Model) ListCart(ctx context.Context, user int64) ([]*CartItem, error) {
 		// will change cartItems inplace
 		func(item *CartItem) (struct{}, error) {
 			product, err := m.product.GetProduct(ctx, item.SKU)
-			log.Printf("Product.GetProduct: %+v\n", product)
+			logger.Infof("Product.GetProduct: %+v", product)
 			if err != nil {
 				return struct{}{}, err
 			}
