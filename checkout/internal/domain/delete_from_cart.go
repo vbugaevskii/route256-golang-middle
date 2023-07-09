@@ -7,7 +7,7 @@ import (
 
 func (m *Model) DeleteFromCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	cartItems, err := m.cartItems.ListCart(ctx, user)
-	logger.Infof("CartItems.ListCart: %+v\n", cartItems)
+	logger.Infof("CartItems.ListCart: %+v", cartItems)
 	if err != nil {
 		return err
 	}

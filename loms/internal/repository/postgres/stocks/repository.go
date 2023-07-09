@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"route256/libs/logger"
+	"route256/libs/tracing"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
@@ -39,16 +40,18 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query stocks.Stocks: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("build query ListStocks: %s", err))
+		return nil, err
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.StocksItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query stocks.Stocks: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query ListStocks: %s", err))
+		return nil, err
 	}
 
 	return converter.ConvStocksItemsSchemaDomain(result), nil
@@ -62,12 +65,12 @@ func (r *Repository) RemoveStocks(ctx context.Context, sku uint32, item domain.S
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query orders_reservations.CancelOrder: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query CancelOrder: %s", err))
 	}
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return err
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query CancelOrder: %s", err))
 	}
 
 	return nil

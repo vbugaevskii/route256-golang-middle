@@ -55,8 +55,8 @@ func (r *Repository) CreateNotification(ctx context.Context, orderId int64, stat
 		return 0, fmt.Errorf("build query CreateNotification: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	row := r.GetQuerier(ctx).QueryRow(ctx, queryRaw, queryArgs...)
 
@@ -79,8 +79,8 @@ func (r *Repository) SetNotificationDelivered(ctx context.Context, recordId int6
 		return fmt.Errorf("build query SetNotificationDelivered: %s", err)
 	}
 
-	// logger.Debugf("SQL: %s\n", queryRaw)
-	// logger.Debugf("SQL: %+v\n", queryArgs)
+	// logger.Debugf("SQL: %s", queryRaw)
+	// logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -102,8 +102,8 @@ func (r *Repository) ListNotificationsWaiting(ctx context.Context) ([]domain.Not
 		return nil, fmt.Errorf("build query ListNotificationsWaiting: %s", err)
 	}
 
-	// logger.Debugf("SQL: %s\n", queryRaw)
-	// logger.Debugf("SQL: %+v\n", queryArgs)
+	// logger.Debugf("SQL: %s", queryRaw)
+	// logger.Debugf("SQL: %+v", queryArgs)
 
 	var notesSchema []schema.Notification
 	if err := pgxscan.Select(ctx, r.GetQuerier(ctx), &notesSchema, queryRaw, queryArgs...); err != nil {
@@ -128,8 +128,8 @@ func (r *Repository) DeleteNotificationsDelivered(ctx context.Context) error {
 		return fmt.Errorf("build query DeleteNotificationsDelivered: %s", err)
 	}
 
-	// logger.Debugf("SQL: %s\n", queryRaw)
-	// logger.Debugf("SQL: %+v\n", queryArgs)
+	// logger.Debugf("SQL: %s", queryRaw)
+	// logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {

@@ -38,6 +38,12 @@ func main() {
 	tracing.Init(config.AppConfig.Name)
 	metrics.Init(config.AppConfig.Name)
 
+	defer func() {
+		if err := tracing.Close(); err != nil {
+			logger.Fatal("failed to close tracer", zap.Error(err))
+		}
+	}()
+
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
