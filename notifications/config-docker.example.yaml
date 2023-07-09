@@ -1,6 +1,10 @@
+name: "notifications"
+
 port:
   grpc: 8083
   http: 8093
+
+loglevel: "info"
 
 kafka:
   brokers:

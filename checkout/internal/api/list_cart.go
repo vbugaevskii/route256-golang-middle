@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
-	"log"
 	"route256/checkout/pkg/checkout"
+	"route256/libs/logger"
 )
 
 func (s *Service) ListCart(ctx context.Context, req *checkout.RequestListCart) (*checkout.ResponseListCart, error) {
-	log.Printf("%+v\n", req)
+	logger.Infof("%+v", req)
 
 	if req.User == 0 {
 		return nil, ErrUserNotFound

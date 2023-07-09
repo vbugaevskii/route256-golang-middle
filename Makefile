@@ -8,6 +8,9 @@ run-all: build-all
 	mkdir -p checkout_pgdata loms_pgdata
 	docker-compose up --force-recreate --build
 
+down-all:
+	docker-compose down
+
 precommit:
 	cd checkout && make precommit
 	cd loms && make precommit

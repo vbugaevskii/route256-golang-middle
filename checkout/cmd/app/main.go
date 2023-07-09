@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"route256/checkout/internal/api"
@@ -12,10 +11,18 @@ import (
 	"route256/checkout/internal/domain"
 	pgcartitems "route256/checkout/internal/repository/postgres/cartitems"
 	"route256/checkout/pkg/checkout"
+	"route256/libs/logger"
+	"route256/libs/metrics"
+	"route256/libs/tracing"
 	"strconv"
 
+	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -24,24 +31,42 @@ import (
 func main() {
 	err := config.Init()
 	if err != nil {
-		log.Fatalln("config init", err)
+		logger.Fatal("config init", zap.Error(err))
 	}
+
+	logger.Init(config.AppConfig.LogLevel)
+	tracing.Init(config.AppConfig.Name)
+	metrics.Init(config.AppConfig.Name)
+
+	defer func() {
+		if err := tracing.Close(); err != nil {
+			logger.Fatal("failed to close tracer", zap.Error(err))
+		}
+	}()
 
 	connLoms, err := grpc.Dial(
 		config.AppConfig.Services.Loms.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			metrics.ClientMetricsInterceptor,
+		),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to server: %v", err)
+		logger.Fatal("failed to connect to server", zap.Error(err))
 	}
 	defer connLoms.Close()
 
 	connProduct, err := grpc.Dial(
 		config.AppConfig.Services.ProductService.Netloc,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithChainUnaryInterceptor(
+			otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer()),
+			metrics.ClientMetricsInterceptor,
+		),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to server: %v", err)
+		logger.Fatal("failed to connect to server", zap.Error(err))
 	}
 	defer connProduct.Close()
 
@@ -50,7 +75,7 @@ func main() {
 		config.AppConfig.Postgres.URL(),
 	)
 	if err != nil {
-		log.Fatalf("failed to connect to db: %v", err)
+		logger.Fatal("failed to connect to db", zap.Error(err))
 	}
 	defer pool.Close()
 
@@ -66,18 +91,34 @@ func main() {
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logger.Fatal("failed to listen", zap.Error(err))
 	}
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(
+			middleware.ChainUnaryServer(
+				otgrpc.OpenTracingServerInterceptor(opentracing.GlobalTracer()),
+				metrics.ServerMetricsInterceptor,
+				logger.LoggingInterceptor,
+			),
+		),
+	)
 	reflection.Register(grpcServer)
-	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
 
-	log.Printf("server listening at %v", lis.Addr())
+	prometheus.Register(grpcServer)
+	go func() {
+		err := metrics.ListenAndServeMetrics(config.AppConfig.Metrics.Port)
+		if err != nil {
+			logger.Fatal("failed to serve metrics", zap.Error(err))
+		}
+	}()
+
+	checkout.RegisterCheckoutServer(grpcServer, api.NewService(model))
+	logger.Infof("server listening at %v", lis.Addr())
 
 	go func() {
 		if err = grpcServer.Serve(lis); err != nil {
-			log.Fatalf("failed to serve: %v", err)
+			logger.Fatal("failed to serve", zap.Error(err))
 		}
 	}()
 
@@ -92,13 +133,13 @@ func main() {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		log.Fatalln("Failed to dial server:", err)
+		logger.Fatal("failed to dial server", zap.Error(err))
 	}
 
 	mux := runtime.NewServeMux()
 	err = checkout.RegisterCheckoutHandler(context.Background(), mux, conn)
 	if err != nil {
-		log.Fatalln("Failed to register gateway:", err)
+		logger.Fatal("failed to register gateway", zap.Error(err))
 	}
 
 	httpServer := &http.Server{
@@ -106,6 +147,6 @@ func main() {
 		Handler: mux,
 	}
 
-	log.Printf("Serving gRPC-Gateway on :%d\n", config.AppConfig.Port.HTTP)
-	log.Fatalln(httpServer.ListenAndServe())
+	logger.Infof("Serving gRPC-Gateway on: %d", config.AppConfig.Port.HTTP)
+	logger.Fatal("failed to serve http", zap.Error(httpServer.ListenAndServe()))
 }

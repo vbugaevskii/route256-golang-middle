@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
-	"log"
+	"route256/libs/logger"
 	"route256/loms/pkg/loms"
 )
 
 func (s *Service) ListOrder(ctx context.Context, req *loms.RequestListOrder) (*loms.ResponseListOrder, error) {
-	log.Printf("%+v\n", req)
+	logger.Infof("%+v", req)
 
 	if req.OrderID == 0 {
 		return nil, ErrOrderNotFound

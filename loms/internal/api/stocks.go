@@ -2,12 +2,12 @@ package api
 
 import (
 	"context"
-	"log"
+	"route256/libs/logger"
 	"route256/loms/pkg/loms"
 )
 
 func (s *Service) Stocks(ctx context.Context, req *loms.RequestStocks) (*loms.ResponseStocks, error) {
-	log.Printf("%+v", req)
+	logger.Infof("%+v", req)
 
 	stocks, err := s.model.Stocks(ctx, req.Sku)
 	if err != nil {

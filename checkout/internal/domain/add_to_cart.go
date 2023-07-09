@@ -2,12 +2,12 @@ package domain
 
 import (
 	"context"
-	"log"
+	"route256/libs/logger"
 )
 
 func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
 	cartItems, err := m.cartItems.ListCart(ctx, user)
-	log.Printf("CartItems.ListCart: %+v\n", cartItems)
+	logger.Infof("CartItems.ListCart: %+v", cartItems)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func (m *Model) AddToCart(ctx context.Context, user int64, sku uint32, count uin
 	}
 
 	stocks, err := m.loms.Stocks(ctx, sku)
-	log.Printf("LOMS.Stocks: %+v", stocks)
+	logger.Infof("LOMS.Stocks: %+v", stocks)
 	if err != nil {
 		return err
 	}

@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
-	"log"
+	"route256/libs/logger"
 	"route256/loms/internal/domain"
 	"route256/loms/pkg/loms"
 )
 
 func (s *Service) CreateOrder(ctx context.Context, req *loms.RequestCreateOrder) (*loms.ResponseCreateOrder, error) {
-	log.Printf("%+v\n", req)
+	logger.Infof("%+v", req)
 
 	if len(req.Items) == 0 {
 		return nil, ErrEmptyOrder

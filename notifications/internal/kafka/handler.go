@@ -2,7 +2,7 @@ package kafka
 
 import (
 	"encoding/json"
-	"log"
+	"route256/libs/logger"
 	"time"
 
 	"github.com/Shopify/sarama"
@@ -35,14 +35,14 @@ func (h *ConsumerGroupHandler) Subscribe() <-chan Order {
 }
 
 func (h *ConsumerGroupHandler) Setup(_ sarama.ConsumerGroupSession) error {
-	log.Println("setup handler")
+	logger.Info("setup handler")
 	close(h.ready)
 	h.ready = nil
 	return nil
 }
 
 func (h *ConsumerGroupHandler) Cleanup(_ sarama.ConsumerGroupSession) error {
-	log.Println("cleanup handler")
+	logger.Info("cleanup handler")
 	h.ready = make(chan bool)
 	return nil
 }
@@ -61,7 +61,7 @@ func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 				return err
 			}
 
-			log.Printf("Message claimed: value = %v, timestamp = %v, topic = %s",
+			logger.Infof("Message claimed: value = %v, timestamp = %v, topic = %s",
 				order,
 				message.Timestamp,
 				message.Topic,

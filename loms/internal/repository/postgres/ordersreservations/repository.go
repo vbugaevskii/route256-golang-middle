@@ -3,7 +3,8 @@ package ordersreservations
 import (
 	"context"
 	"fmt"
-	"log"
+	"route256/libs/logger"
+	"route256/libs/tracing"
 	tx "route256/libs/txmanager/postgres"
 	"route256/loms/internal/converter"
 	"route256/loms/internal/domain"
@@ -39,16 +40,18 @@ func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) (
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query ListOrderReservations: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("build query ListOrderReservations: %s", err))
+		return nil, err
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query ListOrderReservations: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query ListOrderReservations: %s", err))
+		return nil, err
 	}
 
 	return converter.ConvOrdersReservationsSchemaDomain(result), nil
@@ -70,15 +73,15 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query InsertOrderReservations: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query InsertOrderReservations: %s", err))
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query for InsertOrderReservations: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query for InsertOrderReservations: %s", err))
 	}
 
 	return nil
@@ -93,16 +96,18 @@ func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]dom
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return nil, fmt.Errorf("build query for ListSkuReservations: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("build query for ListSkuReservations: %s", err))
+		return nil, err
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
 	if err != nil {
-		return nil, fmt.Errorf("exec query for ListSkuReservations: %s", err)
+		err = tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query for ListSkuReservations: %s", err))
+		return nil, err
 	}
 
 	return converter.ConvOrdersReservationsSchemaDomain(result), nil
@@ -115,15 +120,15 @@ func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64)
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
-		return fmt.Errorf("build query DeleteOrderReservations: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("build query DeleteOrderReservations: %s", err))
 	}
 
-	log.Printf("SQL: %s\n", queryRaw)
-	log.Printf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
-		return fmt.Errorf("exec query for DeleteOrderReservations: %s", err)
+		return tracing.MarkSpanWithError(ctx, fmt.Errorf("exec query DeleteOrderReservations: %s", err))
 	}
 
 	return nil

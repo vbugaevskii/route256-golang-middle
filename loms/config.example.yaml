@@ -1,6 +1,13 @@
+name: "loms"
+
 port:
   grpc: 8081
   http: 8091
+
+metrics:
+  port: 8071
+
+loglevel: "info"
 
 postgres:
   host: "localhost"
