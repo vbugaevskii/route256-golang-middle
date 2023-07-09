@@ -238,12 +238,15 @@ func TestLRU_Len(t *testing.T) {
 	lru.Add("someKey3", "90")
 	assert.Equal(t, lru.Len(), 3)
 
-	_ = lru.Remove("someKey2")
-	assert.Equal(t, lru.Len(), 2)
-
-	_ = lru.Remove("someKey1")
-	assert.Equal(t, lru.Len(), 1)
+	lru.Add("someKey4", "90")
+	assert.Equal(t, lru.Len(), 3)
 
 	_ = lru.Remove("someKey3")
+	assert.Equal(t, lru.Len(), 2)
+
+	_ = lru.Remove("someKey2")
+	assert.Equal(t, lru.Len(), 1)
+
+	_ = lru.Remove("someKey4")
 	assert.Equal(t, lru.Len(), 0)
 }
