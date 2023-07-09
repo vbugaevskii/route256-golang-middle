@@ -431,6 +431,7 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 		case <-ticker.C:
 			orders, err := m.notifications.ListNotificationsWaiting(ctx)
 			logger.Infof("Notifications.ListNotificationsWaiting: %+v\n", orders)
+
 			if err != nil {
 				return err
 			}

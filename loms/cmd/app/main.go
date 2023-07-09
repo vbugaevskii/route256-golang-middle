@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net"
 	"net/http"
 	"route256/libs/logger"
@@ -77,6 +78,12 @@ func main() {
 		err := model.RunNotificationsSender(context.Background())
 		if err != nil {
 			logger.Fatal("failed to send notifications", zap.Error(err))
+		}
+	}()
+	go func() {
+		err := model.RunNotificationsSender(context.Background())
+		if err != nil {
+			log.Fatalf("failed to send notifications: %v", err)
 		}
 	}()
 
