@@ -42,6 +42,12 @@ func main() {
 	tracing.Init(config.AppConfig.Name)
 	metrics.Init(config.AppConfig.Name)
 
+	defer func() {
+		if err := tracing.Close(); err != nil {
+			logger.Fatal("failed to close tracer", zap.Error(err))
+		}
+	}()
+
 	pool, err := pgxpool.Connect(
 		context.Background(),
 		config.AppConfig.Postgres.URL(),
