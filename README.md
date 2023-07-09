@@ -191,7 +191,6 @@ wait
 2. разрешить общение с ботом (нужно найти в Телеграме созданного бота и нажать кнопку `Start`);
 3. узнать свой идентификатор через другого [бота](https://t.me/getmyid_bot);
 4. настроить конфиг для сервиса `notifications`.
-<<<<<<< HEAD
 
 Смотрелка Jaeger: http://localhost:16686
 
@@ -199,5 +198,4 @@ wait
 - http://localhost:8070/metrics
 - http://localhost:9090/targets
 - http://localhost:9090/graph?g0.expr=route256&g0.tab=1&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h
-=======
->>>>>>> master
+
