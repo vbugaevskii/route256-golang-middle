@@ -10,9 +10,11 @@ import (
 )
 
 type ConfigService struct {
-	Netloc string `yaml:"netloc"`
-	Token  string `yaml:"token"`
-	RPS    int    `yaml:"rps"`
+	Netloc    string `yaml:"netloc"`
+	Token     string `yaml:"token"`
+	RPS       int    `yaml:"rps"`
+	CacheSize int    `yaml:"cache_size"`
+	CacheTTL  int    `yaml:"cache_ttl"`
 }
 
 type ConfigPostgres struct {

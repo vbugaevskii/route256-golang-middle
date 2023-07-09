@@ -79,6 +79,8 @@ func main() {
 			connProduct,
 			config.AppConfig.Services.ProductService.Token,
 			config.AppConfig.Services.ProductService.RPS,
+			config.AppConfig.Services.ProductService.CacheSize,
+			config.AppConfig.Services.ProductService.CacheTTL,
 		),
 		pgcartitems.NewCartItemsRepository(pool),
 	)

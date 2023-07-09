@@ -17,6 +17,8 @@ services:
     netloc: "route256.pavl.uk:8082"
     token: "testtoken"
     rps: 10
+    cache_size: 256
+    cache_ttl: 600
 
 postgres:
   host: "localhost"

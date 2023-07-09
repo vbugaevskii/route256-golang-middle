@@ -1,4 +1,4 @@
-package TTLCache
+package ttlcache
 
 import (
 	"container/list"
