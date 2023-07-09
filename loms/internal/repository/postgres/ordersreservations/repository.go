@@ -42,8 +42,8 @@ func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) (
 		return nil, fmt.Errorf("build query ListOrderReservations: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
@@ -73,8 +73,8 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 		return fmt.Errorf("build query InsertOrderReservations: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -96,8 +96,8 @@ func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]dom
 		return nil, fmt.Errorf("build query for ListSkuReservations: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.OrdersReservationsItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)
@@ -118,8 +118,8 @@ func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64)
 		return fmt.Errorf("build query DeleteOrderReservations: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.GetQuerier(ctx).Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {

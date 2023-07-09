@@ -51,8 +51,8 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 		return fmt.Errorf("build query AddToCart: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -72,8 +72,8 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 		return fmt.Errorf("build query DeleteFromCart: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {
@@ -95,8 +95,8 @@ func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart
 		return ResponseListCart{}, fmt.Errorf("build query ListCart: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.CartItem
 	err = pgxscan.Select(ctx, r.pool, &result, queryRaw, queryArgs...)
@@ -118,8 +118,8 @@ func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
 		return fmt.Errorf("build query DeleteCart: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	_, err = r.pool.Exec(ctx, queryRaw, queryArgs...)
 	if err != nil {

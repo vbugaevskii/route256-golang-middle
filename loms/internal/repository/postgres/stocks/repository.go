@@ -42,8 +42,8 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 		return nil, fmt.Errorf("build query stocks.Stocks: %s", err)
 	}
 
-	logger.Debugf("SQL: %s\n", queryRaw)
-	logger.Debugf("SQL: %+v\n", queryArgs)
+	logger.Debugf("SQL: %s", queryRaw)
+	logger.Debugf("SQL: %+v", queryArgs)
 
 	var result []schema.StocksItem
 	err = pgxscan.Select(ctx, r.GetQuerier(ctx), &result, queryRaw, queryArgs...)

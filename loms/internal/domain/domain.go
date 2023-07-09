@@ -110,13 +110,13 @@ func (m *Model) ListOrder(ctx context.Context, orderId int64) (Order, error) {
 		)
 
 		order, err = m.orders.ListOrder(ctxTx, orderId)
-		logger.Infof("Orders.ListOrder: %+v\n", order)
+		logger.Infof("Orders.ListOrder: %+v", order)
 		if err != nil {
 			return err
 		}
 
 		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
-		logger.Infof("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+		logger.Infof("OrdersReservations.ListOrderReservations: %+v", itemsReserved)
 		if err != nil {
 			return err
 		}
@@ -159,7 +159,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 		)
 
 		stocksResevered, err = m.reservations.ListSkuReservations(ctxTx, sku)
-		logger.Infof("OrdersReservations.ListSkuReservations: %+v\n", stocksResevered)
+		logger.Infof("OrdersReservations.ListSkuReservations: %+v", stocksResevered)
 		if err != nil {
 			return err
 		}
@@ -170,7 +170,7 @@ func (m *Model) Stocks(ctx context.Context, sku uint32) ([]StocksItem, error) {
 		}
 
 		stocks, err = m.stocks.ListStocks(ctxTx, sku)
-		logger.Infof("Stocks.ListStocks: %+v\n", stocks)
+		logger.Infof("Stocks.ListStocks: %+v", stocks)
 		if err != nil {
 			return err
 		}
@@ -208,7 +208,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 		var err error
 
 		orderId, err = m.orders.CreateOrder(ctxTx, userId)
-		logger.Infof("Orders.CreateOrder: %+v\n", orderId)
+		logger.Infof("Orders.CreateOrder: %+v", orderId)
 		if err != nil {
 			return err
 		}
@@ -238,7 +238,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			var stocks []StocksItem // to make defer work
 
 			stocks, err = m.stocks.ListStocks(ctxTx, item.Sku)
-			logger.Infof("Stocks.ListStocks: %+v\n", stocks)
+			logger.Infof("Stocks.ListStocks: %+v", stocks)
 			if err != nil {
 				return err
 			}
@@ -304,7 +304,7 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 		)
 
 		order, err = m.orders.ListOrder(ctxTx, orderId)
-		logger.Infof("Orders.ListOrder: %+v\n", order)
+		logger.Infof("Orders.ListOrder: %+v", order)
 		if err != nil {
 			return err
 		}
@@ -356,7 +356,7 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 		}
 
 		itemsReserved, err = m.reservations.ListOrderReservations(ctxTx, orderId)
-		logger.Infof("OrdersReservations.ListOrderReservations: %+v\n", itemsReserved)
+		logger.Infof("OrdersReservations.ListOrderReservations: %+v", itemsReserved)
 		if err != nil {
 			return err
 		}
@@ -430,7 +430,7 @@ func (m *Model) RunNotificationsSender(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			orders, err := m.notifications.ListNotificationsWaiting(ctx)
-			logger.Infof("Notifications.ListNotificationsWaiting: %+v\n", orders)
+			logger.Infof("Notifications.ListNotificationsWaiting: %+v", orders)
 
 			if err != nil {
 				return err
