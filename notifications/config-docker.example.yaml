@@ -1,0 +1,15 @@
+port:
+  grpc: 8083
+  http: 8093
+
+kafka:
+  brokers:
+    - "kafka1:29091"
+    - "kafka2:29092"
+    - "kafka3:29093"
+  topic: "notifications"
+  group: "group-dev"
+
+telegram:
+  token: "TELEGRAM_BOT_TOKEN"
+  chat_id: TELEGRAM_CHAT_ID

@@ -27,8 +27,29 @@ type OrdersReservationsRepository interface {
 	DeleteOrderReservations(ctx context.Context, orderId int64) error
 }
 
+type KafkaProducer interface {
+	SendOrderStatus(message Notification) error
+}
+
+type Notification struct {
+	RecordId  int64      `json:"record_id"`
+	OrderId   int64      `json:"order_id"`
+	Status    StatusType `json:"status"`
+	CreatedAt time.Time  `json:"created_at"`
+}
+
+type NotificationsOutboxRepository interface {
+	CreateNotification(ctx context.Context, orderId int64, status StatusType) (int64, error)
+	SetNotificationDelivered(ctx context.Context, recordId int64) error
+	ListNotificationsWaiting(ctx context.Context) ([]Notification, error)
+	DeleteNotificationsDelivered(ctx context.Context) error
+}
+
 type Model struct {
 	txManager *tx.Manager
+
+	producer      KafkaProducer
+	notifications NotificationsOutboxRepository
 
 	stocks       StocksRepository
 	orders       OrdersRepository
@@ -37,12 +58,18 @@ type Model struct {
 
 func NewModel(
 	txManager *tx.Manager,
+	producer KafkaProducer,
+	notifications NotificationsOutboxRepository,
 	stocks StocksRepository,
 	orders OrdersRepository,
 	reservations OrdersReservationsRepository,
 ) *Model {
 	return &Model{
-		txManager:    txManager,
+		txManager: txManager,
+
+		producer:      producer,
+		notifications: notifications,
+
 		stocks:       stocks,
 		orders:       orders,
 		reservations: reservations,
@@ -184,6 +211,10 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusNew); err != nil {
+			log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
+		}
+
 		defer func() {
 			if err == nil {
 				return
@@ -191,6 +222,12 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 
 			if err = m.orders.UpdateOrderStatus(ctxTx, orderId, StatusFailed); err != nil {
 				log.Printf("Orders.UpdateOrderStatus FAILED: %v\n", err)
+				return
+			}
+
+			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
+				log.Printf("Notifications.CreateNotification FAILED: %v\n", err)
+				return
 			}
 		}()
 
@@ -243,6 +280,10 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusAwaitingPayment); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -280,6 +321,10 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 			return err
 		}
 
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusCancelled); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -288,34 +333,6 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 	}
 
 	return nil
-}
-
-func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
-	ticker := time.NewTicker(time.Minute)
-
-	for {
-		select {
-		case <-ticker.C:
-			orders, err := m.orders.ListOrderOutdated(ctx)
-			if err != nil {
-				return err
-			}
-
-			if orders == nil {
-				continue
-			}
-
-			for _, order := range orders {
-				err = m.CancelOrder(ctx, order.OrderId)
-				if err != nil {
-					return err
-				}
-			}
-
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
 }
 
 func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
@@ -362,6 +379,10 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 			return err
 		}
 
+		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusPayed); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -370,4 +391,70 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 	}
 
 	return nil
+}
+
+func (m *Model) RunCancelOrderByTimeout(ctx context.Context) error {
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+		select {
+		case <-ticker.C:
+			orders, err := m.orders.ListOrderOutdated(ctx)
+			if err != nil {
+				return err
+			}
+
+			if orders == nil {
+				continue
+			}
+
+			for _, order := range orders {
+				err = m.CancelOrder(ctx, order.OrderId)
+				if err != nil {
+					return err
+				}
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+}
+
+func (m *Model) RunNotificationsSender(ctx context.Context) error {
+	ticker := time.NewTicker(time.Minute)
+
+	for {
+		select {
+		case <-ticker.C:
+			orders, err := m.notifications.ListNotificationsWaiting(ctx)
+			log.Printf("Notifications.ListNotificationsWaiting: %+v\n", orders)
+			if err != nil {
+				return err
+			}
+
+			if orders == nil {
+				continue
+			}
+
+			for _, order := range orders {
+				if err = m.producer.SendOrderStatus(order); err == nil {
+					err = m.notifications.SetNotificationDelivered(ctx, order.RecordId)
+					if err != nil {
+						return err
+					}
+				} else {
+					log.Printf("failed to write message to kafka: %v\n", err)
+				}
+			}
+
+			err = m.notifications.DeleteNotificationsDelivered(ctx)
+			if err != nil {
+				return err
+			}
+
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }

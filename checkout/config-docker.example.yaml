@@ -1,0 +1,19 @@
+port:
+  grpc: 8080
+  http: 8090
+
+services:
+  loms:
+    netloc: "localhost:8081"
+
+  product_service:
+    netloc: "route256.pavl.uk:8082"
+    token: "testtoken"
+    rps: 10
+
+postgres:
+  host: "checkout-pgbouncer"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  database: "checkout"
