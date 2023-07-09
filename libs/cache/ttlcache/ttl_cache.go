@@ -129,7 +129,9 @@ func (c *TTLCache[K, V]) RunCleaner(ctx context.Context) {
 			case <-ticker.C:
 				for e := c.queue.Front(); e != nil; e = e.Next() {
 					if c.hasExpired(e) {
+						prev := e.Prev()
 						c.deleteItem(e)
+						e = prev
 					}
 				}
 			case <-ctx.Done():

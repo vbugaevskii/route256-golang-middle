@@ -109,3 +109,10 @@ func (cli *ProductService) ListSkus(ctx context.Context, startAfterSku uint32, c
 	res.SKUList = append(res.SKUList, resProto.Skus...)
 	return res, nil
 }
+
+func (cli *ProductService) RunCacheCleaner(ctx context.Context) {
+	cache := cli.cache.(*ttlcache.TTLCache[uint32, ResponseGetProduct])
+	if cache != nil {
+		cache.RunCleaner(ctx)
+	}
+}

@@ -84,6 +84,7 @@ func main() {
 		),
 		pgcartitems.NewCartItemsRepository(pool),
 	)
+	go model.RunBackgroundJobs(context.Background())
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
