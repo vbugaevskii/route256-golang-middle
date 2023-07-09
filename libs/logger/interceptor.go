@@ -15,7 +15,7 @@ func LoggingInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySe
 			"gRPC",
 			zap.String("server", info.FullMethod),
 			zap.String("method", info.FullMethod),
-			zap.String("err", err.Error()),
+			zap.Error(err),
 		)
 		return nil, err
 	}
