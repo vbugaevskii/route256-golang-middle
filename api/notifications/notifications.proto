@@ -19,12 +19,11 @@ message RequestList {
 }
 
 message ResponseList {
-    message Item {
-        int64  orderID = 1;
-        string status = 2;
-        int64  createdAt = 3;
+    message Notification {
+        string message = 1;
+        int64  createdAt = 2;
     }
 
     int64 user = 1;
-    repeated Item items = 2;
+    repeated Notification items = 2;
 }

@@ -17,3 +17,10 @@ kafka:
 telegram:
   token: "TELEGRAM_BOT_TOKEN"
   chat_id: TELEGRAM_CHAT_ID
+
+postgres:
+  host: "localhost"
+  port: 5435
+  user: "postgres"
+  password: "password"
+  database: "notifications"

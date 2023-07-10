@@ -11,6 +11,9 @@ volumes:
   loms_pgdata:
     external: true
 
+  notifications_pgdata:
+    external: true
+
 services:
   checkout:
     image: checkout
@@ -62,6 +65,8 @@ services:
     ports:
       - "8082:8082"
     depends_on:
+      notifications-postgres-db:
+        condition: service_started
       kafka1:
         condition: service_healthy
       kafka2:
@@ -126,6 +131,20 @@ services:
       - "5434:5432"
     depends_on:
       - loms-postgres-db
+    networks:
+      - net
+
+  notifications-postgres-db:
+    image: postgres:15.1
+    environment:
+      POSTGRES_DB: notifications
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - notifications_pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    ports:
+      - "5435:5432"
     networks:
       - net
 

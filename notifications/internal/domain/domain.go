@@ -1,20 +1,34 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type Model struct {
+	repo NotificationRepository
 }
 
-func NewModel() *Model {
-	return &Model{}
+func NewModel(repo NotificationRepository) *Model {
+	return &Model{
+		repo: repo,
+	}
 }
 
-type Item struct {
-	OrderId   int64
-	Status    string
-	CreatedAt int64
+type NotificationRepository interface {
+	ListNotifications(ctx context.Context, userId int64) ([]Notification, error)
 }
 
-func (m *Model) List(ctx context.Context, userId int64) ([]Item, error) {
-	return nil, nil
+type Notification struct {
+	Message   string
+	CreatedAt time.Time
+}
+
+func (m *Model) List(ctx context.Context, userId int64) ([]Notification, error) {
+	items, err := m.repo.ListNotifications(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+
+	return items, nil
 }

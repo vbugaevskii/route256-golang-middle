@@ -10,11 +10,13 @@ import (
 	"route256/notifications/internal/domain"
 	"route256/notifications/internal/kafka"
 	"route256/notifications/internal/listener"
-	"route256/notifications/pkg/notifications"
+	pgnotify "route256/notifications/internal/repository/postgres/notifications"
+	pbnotify "route256/notifications/pkg/notifications"
 	"strconv"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -64,7 +66,18 @@ func main() {
 		klistener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
 	}()
 
-	model := domain.NewModel()
+	pool, err := pgxpool.Connect(
+		context.Background(),
+		config.AppConfig.Postgres.URL(),
+	)
+	if err != nil {
+		logger.Fatal("failed to connect to db", zap.Error(err))
+	}
+	defer pool.Close()
+
+	model := domain.NewModel(
+		pgnotify.NewNotificationsRepository(pool),
+	)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {
@@ -73,7 +86,7 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 	reflection.Register(grpcServer)
-	notifications.RegisterNotificationsServer(grpcServer, api.NewService(model))
+	pbnotify.RegisterNotificationsServer(grpcServer, api.NewService(model))
 
 	logger.Infof("server listening at %v", lis.Addr())
 	if err = grpcServer.Serve(lis); err != nil {

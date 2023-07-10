@@ -5,7 +5,10 @@ build-all:
 
 run-all: build-all
 	# sudo docker compose up --force-recreate --build
-	mkdir -p checkout_pgdata loms_pgdata
+	mkdir -p checkout_pgdata loms_pgdata notifications_pgdata
+	docker volume create checkout_pgdata
+	docker volume create loms_pgdata
+	docker volume create notifications_pgdata
 	docker-compose up --force-recreate --build
 
 down-all:

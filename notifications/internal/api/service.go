@@ -7,7 +7,7 @@ import (
 )
 
 type Impl interface {
-	List(ctx context.Context, user int64) ([]domain.Item, error)
+	List(ctx context.Context, user int64) ([]domain.Notification, error)
 }
 
 type Service struct {
@@ -29,10 +29,9 @@ func (s *Service) List(ctx context.Context, req *nofity.RequestList) (*nofity.Re
 		User: req.User,
 	}
 	for _, item := range resp {
-		respPb.Items = append(respPb.Items, &nofity.ResponseList_Item{
-			OrderID:   item.OrderId,
-			Status:    item.Status,
-			CreatedAt: item.CreatedAt,
+		respPb.Items = append(respPb.Items, &nofity.ResponseList_Notification{
+			Message:   item.Message,
+			CreatedAt: item.CreatedAt.Unix(),
 		})
 	}
 	return &respPb, nil
