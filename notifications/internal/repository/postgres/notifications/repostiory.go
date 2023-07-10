@@ -4,14 +4,12 @@ import (
 	"context"
 	"fmt"
 	"route256/libs/logger"
+	tx "route256/libs/txmanager/postgres"
 	"route256/notifications/internal/domain"
 	"route256/notifications/internal/repository/schema"
 	"time"
 
-	tx "route256/libs/txmanager/postgres"
-
 	sq "github.com/Masterminds/squirrel"
-
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
 )

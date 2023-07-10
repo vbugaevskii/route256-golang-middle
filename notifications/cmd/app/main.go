@@ -15,9 +15,8 @@ import (
 	"strconv"
 	"sync"
 
-	lrucache "github.com/hashicorp/golang-lru/v2"
-
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	lrucache "github.com/hashicorp/golang-lru/v2"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
