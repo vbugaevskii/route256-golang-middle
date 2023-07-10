@@ -30,7 +30,7 @@ bindir:
 	mkdir -p ${BINDIR}
 
 format: install-smartimports
-	${SMARTIMPORTS} -exclude internal/mocks
+	${SMARTIMPORTS} -exclude pkg -v
 
 install-lint: bindir
 	test -f ${LINTBIN} || \
