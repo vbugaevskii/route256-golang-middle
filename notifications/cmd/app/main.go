@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"sync"
 
+	lrucache "github.com/hashicorp/golang-lru/v2"
+
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
@@ -60,11 +62,17 @@ func main() {
 	}
 	defer pool.Close()
 
+	cache, err := lrucache.New[int64, []domain.Notification](128)
+	if err != nil {
+		logger.Fatal("failed to init cache", zap.Error(err))
+	}
+
 	wg := &sync.WaitGroup{}
 	klistener := listener.NewKafkaListener(
 		group,
 		bot,
 		pgnotify.NewNotificationsRepository(pool),
+		cache,
 	)
 
 	wg.Add(1)
@@ -81,6 +89,7 @@ func main() {
 
 	model := domain.NewModel(
 		pgnotify.NewNotificationsRepository(pool),
+		cache,
 	)
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))

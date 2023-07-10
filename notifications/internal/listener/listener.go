@@ -16,17 +16,32 @@ type NotificationRepository interface {
 	SaveNotification(ctx context.Context, recordId int64, userId int64, message string) error
 }
 
+type Cache[K comparable, V any] interface {
+	Add(key K, value V) bool
+	Get(key K) (V, bool)
+	Remove(key K) bool
+	Contains(key K) bool
+	Len() int
+}
+
 type KafkaListener struct {
 	group *kafka.ConsumerGroup
 	bot   *tgbotapi.BotAPI
 	repo  NotificationRepository
+	cache Cache[int64, []domain.Notification]
 }
 
-func NewKafkaListener(group *kafka.ConsumerGroup, bot *tgbotapi.BotAPI, repo NotificationRepository) *KafkaListener {
+func NewKafkaListener(
+	group *kafka.ConsumerGroup,
+	bot *tgbotapi.BotAPI,
+	repo NotificationRepository,
+	cache Cache[int64, []domain.Notification],
+) *KafkaListener {
 	return &KafkaListener{
 		group: group,
 		bot:   bot,
 		repo:  repo,
+		cache: cache,
 	}
 }
 
@@ -60,5 +75,7 @@ func (kl *KafkaListener) RunServicer(ctx context.Context, chatId int64) {
 		if err != nil {
 			logger.Infof("failed to save messag %v", err)
 		}
+
+		_ = kl.cache.Remove(order.UserId)
 	}
 }
