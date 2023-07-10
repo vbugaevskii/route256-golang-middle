@@ -9,6 +9,7 @@ import (
 	"route256/notifications/internal/config"
 	"route256/notifications/internal/domain"
 	"route256/notifications/internal/kafka"
+	"route256/notifications/internal/listener"
 	"route256/notifications/pkg/notifications"
 	"strconv"
 	"sync"
@@ -49,18 +50,18 @@ func main() {
 	}()
 
 	wg := &sync.WaitGroup{}
-	listener := kafka.NewKafkaListener(group, bot)
+	klistener := listener.NewKafkaListener(group, bot)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		listener.RunListener(context.Background())
+		klistener.RunListener(context.Background())
 	}()
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		listener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
+		klistener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
 	}()
 
 	model := domain.NewModel()

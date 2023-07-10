@@ -1,20 +1,21 @@
-package kafka
+package listener
 
 import (
 	"context"
 	"fmt"
 	"route256/libs/logger"
+	"route256/notifications/internal/kafka"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 )
 
 type KafkaListener struct {
-	group *ConsumerGroup
+	group *kafka.ConsumerGroup
 	bot   *tgbotapi.BotAPI
 }
 
-func NewKafkaListener(group *ConsumerGroup, bot *tgbotapi.BotAPI) *KafkaListener {
+func NewKafkaListener(group *kafka.ConsumerGroup, bot *tgbotapi.BotAPI) *KafkaListener {
 	return &KafkaListener{
 		group: group,
 		bot:   bot,
