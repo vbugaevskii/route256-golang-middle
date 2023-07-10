@@ -36,7 +36,13 @@ func (kl *KafkaListener) RunServicer(ctx context.Context, chatId int64) {
 	for order := range kl.group.Subscribe() {
 		msg := tgbotapi.NewMessage(
 			chatId,
-			fmt.Sprintf("[%v] OrderId = %d; Status = %s", order.CreatedAt, order.OrderId, order.Status),
+			fmt.Sprintf(
+				"[%v] UserId = %d; OrderId = %d; Status = %s",
+				order.CreatedAt,
+				order.UserId,
+				order.OrderId,
+				order.Status,
+			),
 		)
 		if _, err := kl.bot.Send(msg); err != nil {
 			logger.Infof("failed to send message %v", err)

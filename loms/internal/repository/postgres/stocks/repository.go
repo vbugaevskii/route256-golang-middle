@@ -13,6 +13,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 )
 
 type Repository struct {
@@ -32,6 +33,9 @@ const (
 )
 
 func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.StocksItem, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/stocks/list_stocks")
+	defer span.Finish()
+
 	query := sq.
 		Select(ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -58,6 +62,9 @@ func (r *Repository) ListStocks(ctx context.Context, sku uint32) ([]domain.Stock
 }
 
 func (r *Repository) RemoveStocks(ctx context.Context, sku uint32, item domain.StocksItem) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/stocks/remove_stocks")
+	defer span.Finish()
+
 	query := sq.
 		Update(TableName).
 		Set(ColumnCount, sq.ConcatExpr(ColumnCount, sq.Expr(" - ?", item.Count))).

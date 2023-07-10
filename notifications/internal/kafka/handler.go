@@ -9,6 +9,7 @@ import (
 )
 
 type Order struct {
+	UserId    int64     `json:"user_id"`
 	OrderId   int64     `json:"order_id"`
 	Status    string    `json:"status"`
 	CreatedAt time.Time `json:"created_at"`
