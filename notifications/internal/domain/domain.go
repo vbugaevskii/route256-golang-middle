@@ -17,6 +17,7 @@ func NewModel(repo NotificationRepository) *Model {
 
 type NotificationRepository interface {
 	ListNotifications(ctx context.Context, userId int64) ([]Notification, error)
+	SaveNotification(ctx context.Context, recordId int64, userId int64, message string) error
 }
 
 type Notification struct {

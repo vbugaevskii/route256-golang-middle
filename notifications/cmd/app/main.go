@@ -51,8 +51,21 @@ func main() {
 		}
 	}()
 
+	pool, err := pgxpool.Connect(
+		context.Background(),
+		config.AppConfig.Postgres.URL(),
+	)
+	if err != nil {
+		logger.Fatal("failed to connect to db", zap.Error(err))
+	}
+	defer pool.Close()
+
 	wg := &sync.WaitGroup{}
-	klistener := listener.NewKafkaListener(group, bot)
+	klistener := listener.NewKafkaListener(
+		group,
+		bot,
+		pgnotify.NewNotificationsRepository(pool),
+	)
 
 	wg.Add(1)
 	go func() {
@@ -65,15 +78,6 @@ func main() {
 		defer wg.Done()
 		klistener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
 	}()
-
-	pool, err := pgxpool.Connect(
-		context.Background(),
-		config.AppConfig.Postgres.URL(),
-	)
-	if err != nil {
-		logger.Fatal("failed to connect to db", zap.Error(err))
-	}
-	defer pool.Close()
 
 	model := domain.NewModel(
 		pgnotify.NewNotificationsRepository(pool),
