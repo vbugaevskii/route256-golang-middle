@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"route256/libs/logger"
 	"route256/notifications/internal/config"
 	"route256/notifications/internal/kafka"
@@ -31,41 +30,30 @@ func main() {
 		config.AppConfig.Kafka.Group,
 		config.AppConfig.Kafka.Topic,
 	)
+	if err != nil {
+		logger.Fatal("failed kafka consumer init", zap.Error(err))
+	}
+
 	defer func() {
 		if err = group.Close(); err != nil {
 			logger.Fatal("failed kafka consumer close", zap.Error(err))
 		}
 	}()
 
-	if err != nil {
-		logger.Fatal("failed kafka consumer init", zap.Error(err))
-	}
-
 	wg := &sync.WaitGroup{}
+	listener := kafka.NewKafkaListener(group, bot)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		for {
-			if err := group.Consume(context.Background()); err != nil {
-				logger.Fatal("failed kafka consumer read", zap.Error(err))
-			}
-		}
+		listener.RunListener(context.Background())
 	}()
 
-	<-group.Ready()
-	logger.Info("service ready to listen to kafka")
-
-	for order := range group.Subscribe() {
-		msg := tgbotapi.NewMessage(
-			config.AppConfig.Telegram.ChatId,
-			fmt.Sprintf("[%v] OrderId = %d; Status = %s", order.CreatedAt, order.OrderId, order.Status),
-		)
-		if _, err := bot.Send(msg); err != nil {
-			logger.Infof("failed to send message %v", err)
-		}
-	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		listener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
+	}()
 
 	wg.Wait()
 }
