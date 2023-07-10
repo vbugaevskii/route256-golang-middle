@@ -1,0 +1,30 @@
+syntax = 'proto3';
+
+package notifications;
+
+option go_package = "route256/loms/pkg/notifications";
+
+import "google/api/annotations.proto";
+
+service Notifications {
+    rpc List(RequestList) returns (ResponseList) {
+        option (google.api.http) = {
+            get: "/list"
+        };
+    }
+}
+
+message RequestList {
+    int64 user = 1;
+}
+
+message ResponseList {
+    message Item {
+        int64  orderID = 1;
+        string status = 2;
+        int64  createdAt = 3;
+    }
+
+    int64 user = 1;
+    repeated Item items = 2;
+}

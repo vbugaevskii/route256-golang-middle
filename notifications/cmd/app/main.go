@@ -2,13 +2,21 @@ package main
 
 import (
 	"context"
+	"log"
+	"net"
 	"route256/libs/logger"
+	"route256/notifications/internal/api"
 	"route256/notifications/internal/config"
+	"route256/notifications/internal/domain"
 	"route256/notifications/internal/kafka"
+	"route256/notifications/pkg/notifications"
+	"strconv"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -54,6 +62,22 @@ func main() {
 		defer wg.Done()
 		listener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
 	}()
+
+	model := domain.NewModel()
+
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	notifications.RegisterNotificationsServer(grpcServer, api.NewService(model))
+
+	logger.Infof("server listening at %v", lis.Addr())
+	if err = grpcServer.Serve(lis); err != nil {
+		logger.Fatal("failed to serve", zap.Error(err))
+	}
 
 	wg.Wait()
 }
