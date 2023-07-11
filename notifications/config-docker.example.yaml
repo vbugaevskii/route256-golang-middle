@@ -6,6 +6,8 @@ port:
 
 loglevel: "info"
 
+cache_size: 128
+
 kafka:
   brokers:
     - "kafka1:29091"

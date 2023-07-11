@@ -61,7 +61,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	cache, err := lrucache.New[int64, []domain.Notification](128)
+	cache, err := lrucache.New[int64, []domain.Notification](config.AppConfig.CacheSize)
 	if err != nil {
 		logger.Fatal("failed to init cache", zap.Error(err))
 	}

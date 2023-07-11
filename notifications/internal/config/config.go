@@ -29,7 +29,8 @@ type Config struct {
 		HTTP int `yaml:"http"`
 	} `yaml:"port"`
 
-	LogLevel string `yaml:"loglevel"`
+	LogLevel  string `yaml:"loglevel"`
+	CacheSize int    `yaml:"cache_size"`
 
 	Kafka ConfigKafka `yaml:"kafka"`
 
