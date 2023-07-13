@@ -216,5 +216,5 @@ wait
 - http://localhost:9090/graph?g0.expr=route256&g0.tab=1&g0.stacked=0&g0.show_exemplars=0&g0.range_input=1h
 
 ```bash
-grpcurl -plaintext -d '{"user": 1}' localhost:8083 notifications.Notifications/List
+grpcurl -plaintext -d '{"user": 1, "tsFrom": "2023-07-12T20:32:05Z", "tsTill": "2023-07-22T20:32:05Z"}' localhost:8083 notifications.Notifications/List
 ```

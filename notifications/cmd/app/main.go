@@ -61,7 +61,7 @@ func main() {
 	}
 	defer pool.Close()
 
-	cache, err := lrucache.New[int64, []domain.Notification](config.AppConfig.CacheSize)
+	cache, err := lrucache.New[domain.CacheKey, []domain.Notification](config.AppConfig.CacheSize)
 	if err != nil {
 		logger.Fatal("failed to init cache", zap.Error(err))
 	}
@@ -71,7 +71,6 @@ func main() {
 		group,
 		bot,
 		pgnotify.NewNotificationsRepository(pool),
-		cache,
 	)
 
 	wg.Add(1)

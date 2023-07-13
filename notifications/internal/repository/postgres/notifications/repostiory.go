@@ -32,12 +32,17 @@ const (
 	ColumnCreatedAt = "created_at"
 )
 
-func (r *Repository) ListNotifications(ctx context.Context, userId int64) ([]domain.Notification, error) {
+func (r *Repository) ListNotifications(
+	ctx context.Context,
+	userId int64,
+	tsFrom time.Time,
+	tsTill time.Time,
+) ([]domain.Notification, error) {
 	query := sq.
 		Select(ColumnRecordId, ColumnUserId, ColumnMessage, ColumnCreatedAt).
 		From(TableName).
 		Where(sq.Eq{ColumnUserId: userId}).
-		Where("created_at + interval '1 day' > now()")
+		Where(sq.Expr("created_at >= ? AND created_at < ?", tsFrom, tsTill))
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {

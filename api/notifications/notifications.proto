@@ -5,6 +5,7 @@ package notifications;
 option go_package = "route256/loms/pkg/notifications";
 
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
 
 service Notifications {
     rpc List(RequestList) returns (ResponseList) {
@@ -16,12 +17,14 @@ service Notifications {
 
 message RequestList {
     int64 user = 1;
+    google.protobuf.Timestamp tsFrom = 2;
+    google.protobuf.Timestamp tsTill = 3;
 }
 
 message ResponseList {
     message Notification {
         string message = 1;
-        int64  createdAt = 2;
+        google.protobuf.Timestamp createdAt = 2;
     }
 
     int64 user = 1;

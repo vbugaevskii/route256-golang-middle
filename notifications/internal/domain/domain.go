@@ -8,7 +8,7 @@ import (
 
 type Model struct {
 	repo  NotificationRepository
-	cache Cache[int64, []Notification]
+	cache Cache[CacheKey, []Notification]
 }
 
 type Cache[K comparable, V any] interface {
@@ -19,7 +19,13 @@ type Cache[K comparable, V any] interface {
 	Len() int
 }
 
-func NewModel(repo NotificationRepository, cache Cache[int64, []Notification]) *Model {
+type CacheKey struct {
+	userId int64
+	tsFrom time.Time
+	tsTill time.Time
+}
+
+func NewModel(repo NotificationRepository, cache Cache[CacheKey, []Notification]) *Model {
 	return &Model{
 		repo:  repo,
 		cache: cache,
@@ -27,7 +33,7 @@ func NewModel(repo NotificationRepository, cache Cache[int64, []Notification]) *
 }
 
 type NotificationRepository interface {
-	ListNotifications(ctx context.Context, userId int64) ([]Notification, error)
+	ListNotifications(ctx context.Context, userId int64, tsFrom time.Time, tsTill time.Time) ([]Notification, error)
 	SaveNotification(ctx context.Context, recordId int64, userId int64, message string) error
 }
 
@@ -36,21 +42,27 @@ type Notification struct {
 	CreatedAt time.Time
 }
 
-func (m *Model) List(ctx context.Context, userId int64) ([]Notification, error) {
+func (m *Model) List(ctx context.Context, userId int64, tsFrom time.Time, tsTill time.Time) ([]Notification, error) {
+	cacheKey := CacheKey{
+		userId: userId,
+		tsFrom: tsFrom,
+		tsTill: tsTill,
+	}
+
 	if m.cache != nil {
-		if items, exists := m.cache.Get(userId); exists {
+		if items, exists := m.cache.Get(cacheKey); exists {
 			logger.Infof("cache hit for userId=%d", userId)
 			return items, nil
 		}
 	}
 
-	items, err := m.repo.ListNotifications(ctx, userId)
+	items, err := m.repo.ListNotifications(ctx, userId, tsFrom, tsTill)
 	if err != nil {
 		return nil, err
 	}
 
 	if m.cache != nil {
-		m.cache.Add(userId, items)
+		m.cache.Add(cacheKey, items)
 	}
 
 	return items, nil

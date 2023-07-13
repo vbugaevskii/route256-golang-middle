@@ -4,10 +4,13 @@ import (
 	"context"
 	"route256/notifications/internal/domain"
 	nofity "route256/notifications/pkg/notifications"
+	"time"
+
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 type Impl interface {
-	List(ctx context.Context, user int64) ([]domain.Notification, error)
+	List(ctx context.Context, user int64, tsFrom time.Time, tsTill time.Time) ([]domain.Notification, error)
 }
 
 type Service struct {
@@ -20,7 +23,7 @@ func NewService(model Impl) *Service {
 }
 
 func (s *Service) List(ctx context.Context, req *nofity.RequestList) (*nofity.ResponseList, error) {
-	resp, err := s.model.List(ctx, req.User)
+	resp, err := s.model.List(ctx, req.User, req.TsFrom.AsTime(), req.TsTill.AsTime())
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +34,7 @@ func (s *Service) List(ctx context.Context, req *nofity.RequestList) (*nofity.Re
 	for _, item := range resp {
 		respPb.Items = append(respPb.Items, &nofity.ResponseList_Notification{
 			Message:   item.Message,
-			CreatedAt: item.CreatedAt.Unix(),
+			CreatedAt: timestamppb.New(item.CreatedAt),
 		})
 	}
 	return &respPb, nil

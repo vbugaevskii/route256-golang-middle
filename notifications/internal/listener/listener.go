@@ -6,13 +6,14 @@ import (
 	"route256/libs/logger"
 	"route256/notifications/internal/domain"
 	"route256/notifications/internal/kafka"
+	"time"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
 )
 
 type NotificationRepository interface {
-	ListNotifications(ctx context.Context, userId int64) ([]domain.Notification, error)
+	ListNotifications(ctx context.Context, userId int64, tsFrom time.Time, tsTill time.Time) ([]domain.Notification, error)
 	SaveNotification(ctx context.Context, recordId int64, userId int64, message string) error
 }
 
@@ -28,20 +29,17 @@ type KafkaListener struct {
 	group *kafka.ConsumerGroup
 	bot   *tgbotapi.BotAPI
 	repo  NotificationRepository
-	cache Cache[int64, []domain.Notification]
 }
 
 func NewKafkaListener(
 	group *kafka.ConsumerGroup,
 	bot *tgbotapi.BotAPI,
 	repo NotificationRepository,
-	cache Cache[int64, []domain.Notification],
 ) *KafkaListener {
 	return &KafkaListener{
 		group: group,
 		bot:   bot,
 		repo:  repo,
-		cache: cache,
 	}
 }
 
@@ -75,7 +73,5 @@ func (kl *KafkaListener) RunServicer(ctx context.Context, chatId int64) {
 		if err != nil {
 			logger.Infof("failed to save messag %v", err)
 		}
-
-		_ = kl.cache.Remove(order.UserId)
 	}
 }
