@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"route256/notifications/internal/domain"
 	nofity "route256/notifications/pkg/notifications"
 	"time"
@@ -22,8 +23,20 @@ func NewService(model Impl) *Service {
 	return &Service{model: model}
 }
 
+var (
+	EpochStartTime = time.Unix(0, 0).UTC()
+
+	ErrInvalidPeriod = errors.New("invalid period: `tsTill` should be greater than `tsFrom`")
+)
+
 func (s *Service) List(ctx context.Context, req *nofity.RequestList) (*nofity.ResponseList, error) {
-	resp, err := s.model.List(ctx, req.User, req.TsFrom.AsTime(), req.TsTill.AsTime())
+	tsFrom, tsTill := req.TsFrom.AsTime(), req.TsTill.AsTime()
+
+	if !tsFrom.Equal(EpochStartTime) && !tsTill.Equal(EpochStartTime) && tsFrom.After(tsTill) {
+		return nil, ErrInvalidPeriod
+	}
+
+	resp, err := s.model.List(ctx, req.User, tsFrom, tsTill)
 	if err != nil {
 		return nil, err
 	}

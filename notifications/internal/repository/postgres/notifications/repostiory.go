@@ -32,6 +32,10 @@ const (
 	ColumnCreatedAt = "created_at"
 )
 
+var (
+	EpochStartTime = time.Unix(0, 0).UTC()
+)
+
 func (r *Repository) ListNotifications(
 	ctx context.Context,
 	userId int64,
@@ -41,8 +45,15 @@ func (r *Repository) ListNotifications(
 	query := sq.
 		Select(ColumnRecordId, ColumnUserId, ColumnMessage, ColumnCreatedAt).
 		From(TableName).
-		Where(sq.Eq{ColumnUserId: userId}).
-		Where(sq.Expr("created_at >= ? AND created_at < ?", tsFrom, tsTill))
+		Where(sq.Eq{ColumnUserId: userId})
+
+	if tsFrom != EpochStartTime {
+		query = query.Where(sq.GtOrEq{ColumnCreatedAt: tsFrom})
+	}
+
+	if tsTill != EpochStartTime {
+		query = query.Where(sq.LtOrEq{ColumnCreatedAt: tsTill})
+	}
 
 	queryRaw, queryArgs, err := query.PlaceholderFormat(sq.Dollar).ToSql()
 	if err != nil {
