@@ -24,15 +24,23 @@ func NewService(model Impl) *Service {
 }
 
 var (
-	EpochStartTime = time.Unix(0, 0).UTC()
-
 	ErrInvalidPeriod = errors.New("invalid period: `tsTill` should be greater than `tsFrom`")
 )
 
 func (s *Service) List(ctx context.Context, req *nofity.RequestList) (*nofity.ResponseList, error) {
-	tsFrom, tsTill := req.TsFrom.AsTime(), req.TsTill.AsTime()
+	var tsFrom, tsTill time.Time
 
-	if !tsFrom.Equal(EpochStartTime) && !tsTill.Equal(EpochStartTime) && tsFrom.After(tsTill) {
+	if req.TsFrom != nil {
+		tsFrom = req.TsFrom.AsTime()
+	}
+
+	if req.TsTill != nil {
+		tsTill = req.TsTill.AsTime()
+	} else {
+		tsTill = time.Now()
+	}
+
+	if req.TsFrom != nil && req.TsTill != nil && tsFrom.After(tsTill) {
 		return nil, ErrInvalidPeriod
 	}
 

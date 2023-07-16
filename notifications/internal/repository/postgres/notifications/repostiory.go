@@ -33,7 +33,7 @@ const (
 )
 
 var (
-	EpochStartTime = time.Unix(0, 0).UTC()
+	EpochStartTime = time.Time{}
 )
 
 func (r *Repository) ListNotifications(
