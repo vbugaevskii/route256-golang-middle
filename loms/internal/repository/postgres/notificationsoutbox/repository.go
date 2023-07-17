@@ -34,9 +34,10 @@ const (
 	ColumnCreatedAt = "created_at"
 )
 
-func (r *Repository) CreateNotification(ctx context.Context, orderId int64, status domain.StatusType) (int64, error) {
+func (r *Repository) CreateNotification(ctx context.Context, userId int64, orderId int64, status domain.StatusType) (int64, error) {
 	key := fmt.Sprint(orderId)
 	val, err := json.Marshal(domain.Notification{
+		UserId:  userId,
 		OrderId: orderId,
 		Status:  status,
 	})

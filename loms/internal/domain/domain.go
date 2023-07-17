@@ -35,13 +35,14 @@ type KafkaProducer interface {
 
 type Notification struct {
 	RecordId  int64      `json:"record_id"`
+	UserId    int64      `json:"user_id"`
 	OrderId   int64      `json:"order_id"`
 	Status    StatusType `json:"status"`
 	CreatedAt time.Time  `json:"created_at"`
 }
 
 type NotificationsOutboxRepository interface {
-	CreateNotification(ctx context.Context, orderId int64, status StatusType) (int64, error)
+	CreateNotification(ctx context.Context, userId int64, orderId int64, status StatusType) (int64, error)
 	SetNotificationDelivered(ctx context.Context, recordId int64) error
 	ListNotificationsWaiting(ctx context.Context) ([]Notification, error)
 	DeleteNotificationsDelivered(ctx context.Context) error
@@ -213,7 +214,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
-		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusNew); err != nil {
+		if _, err = m.notifications.CreateNotification(ctxTx, userId, orderId, StatusNew); err != nil {
 			logger.Error("failed Notifications.CreateNotification", zap.Error(err))
 		}
 
@@ -227,7 +228,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 				return
 			}
 
-			if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusFailed); err != nil {
+			if _, err = m.notifications.CreateNotification(ctxTx, userId, orderId, StatusFailed); err != nil {
 				logger.Error("failed Notifications.CreateNotification", zap.Error(err))
 				return
 			}
@@ -282,7 +283,7 @@ func (m *Model) CreateOrder(ctx context.Context, userId int64, items []OrderItem
 			return err
 		}
 
-		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusAwaitingPayment); err != nil {
+		if _, err = m.notifications.CreateNotification(ctxTx, userId, orderId, StatusAwaitingPayment); err != nil {
 			return err
 		}
 
@@ -323,7 +324,12 @@ func (m *Model) CancelOrder(ctx context.Context, orderId int64) error {
 			return err
 		}
 
-		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusCancelled); err != nil {
+		order, err = m.orders.ListOrder(ctxTx, orderId)
+		if err != nil {
+			return err
+		}
+
+		if _, err = m.notifications.CreateNotification(ctxTx, order.User, orderId, StatusCancelled); err != nil {
 			return err
 		}
 
@@ -381,7 +387,12 @@ func (m *Model) OrderPayed(ctx context.Context, orderId int64) error {
 			return err
 		}
 
-		if _, err = m.notifications.CreateNotification(ctxTx, orderId, StatusPayed); err != nil {
+		order, err = m.orders.ListOrder(ctxTx, orderId)
+		if err != nil {
+			return err
+		}
+
+		if _, err = m.notifications.CreateNotification(ctxTx, order.User, orderId, StatusPayed); err != nil {
 			return err
 		}
 

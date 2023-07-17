@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"route256/libs/logger"
@@ -39,9 +38,12 @@ func main() {
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
-	tracing.Init(config.AppConfig.Name)
 	metrics.Init(config.AppConfig.Name)
 
+	err = tracing.Init(config.AppConfig.Name)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
 	defer func() {
 		if err := tracing.Close(); err != nil {
 			logger.Fatal("failed to close tracer", zap.Error(err))
@@ -84,12 +86,6 @@ func main() {
 		err := model.RunNotificationsSender(context.Background())
 		if err != nil {
 			logger.Fatal("failed to send notifications", zap.Error(err))
-		}
-	}()
-	go func() {
-		err := model.RunNotificationsSender(context.Background())
-		if err != nil {
-			log.Fatalf("failed to send notifications: %v", err)
 		}
 	}()
 

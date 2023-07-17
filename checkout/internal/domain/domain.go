@@ -45,3 +45,12 @@ func New(loms LomsClient, product ProductClient, cartItems CartItemsRepository) 
 var (
 	ErrProductInsufficient = errors.New("product insufficient")
 )
+
+func (m *Model) RunBackgroundJobs(ctx context.Context) {
+	go func() {
+		product := m.product.(*cliproduct.ProductService)
+		if product != nil {
+			product.RunCacheCleaner(ctx)
+		}
+	}()
+}
