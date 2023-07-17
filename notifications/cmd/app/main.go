@@ -2,14 +2,25 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"log"
+	"net"
 	"route256/libs/logger"
+	"route256/notifications/internal/api"
 	"route256/notifications/internal/config"
+	"route256/notifications/internal/domain"
 	"route256/notifications/internal/kafka"
+	"route256/notifications/internal/listener"
+	pgnotify "route256/notifications/internal/repository/postgres/notifications"
+	pbnotify "route256/notifications/pkg/notifications"
+	"strconv"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	lrucache "github.com/hashicorp/golang-lru/v2"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 func main() {
@@ -31,40 +42,66 @@ func main() {
 		config.AppConfig.Kafka.Group,
 		config.AppConfig.Kafka.Topic,
 	)
+	if err != nil {
+		logger.Fatal("failed kafka consumer init", zap.Error(err))
+	}
+
 	defer func() {
 		if err = group.Close(); err != nil {
 			logger.Fatal("failed kafka consumer close", zap.Error(err))
 		}
 	}()
 
+	pool, err := pgxpool.Connect(
+		context.Background(),
+		config.AppConfig.Postgres.URL(),
+	)
 	if err != nil {
-		logger.Fatal("failed kafka consumer init", zap.Error(err))
+		logger.Fatal("failed to connect to db", zap.Error(err))
+	}
+	defer pool.Close()
+
+	cache, err := lrucache.New[domain.CacheKey, []domain.Notification](config.AppConfig.CacheSize)
+	if err != nil {
+		logger.Fatal("failed to init cache", zap.Error(err))
 	}
 
 	wg := &sync.WaitGroup{}
+	klistener := listener.NewKafkaListener(
+		group,
+		bot,
+		pgnotify.NewNotificationsRepository(pool),
+	)
 
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-
-		for {
-			if err := group.Consume(context.Background()); err != nil {
-				logger.Fatal("failed kafka consumer read", zap.Error(err))
-			}
-		}
+		klistener.RunListener(context.Background())
 	}()
 
-	<-group.Ready()
-	logger.Info("service ready to listen to kafka")
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		klistener.RunServicer(context.Background(), config.AppConfig.Telegram.ChatId)
+	}()
 
-	for order := range group.Subscribe() {
-		msg := tgbotapi.NewMessage(
-			config.AppConfig.Telegram.ChatId,
-			fmt.Sprintf("[%v] OrderId = %d; Status = %s", order.CreatedAt, order.OrderId, order.Status),
-		)
-		if _, err := bot.Send(msg); err != nil {
-			logger.Infof("failed to send message %v", err)
-		}
+	model := domain.NewModel(
+		pgnotify.NewNotificationsRepository(pool),
+		cache,
+	)
+
+	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
+	if err != nil {
+		log.Fatalf("failed to listen: %v", err)
+	}
+
+	grpcServer := grpc.NewServer()
+	reflection.Register(grpcServer)
+	pbnotify.RegisterNotificationsServer(grpcServer, api.NewService(model))
+
+	logger.Infof("server listening at %v", lis.Addr())
+	if err = grpcServer.Serve(lis); err != nil {
+		logger.Fatal("failed to serve", zap.Error(err))
 	}
 
 	wg.Wait()

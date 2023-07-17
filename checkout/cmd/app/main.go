@@ -35,9 +35,12 @@ func main() {
 	}
 
 	logger.Init(config.AppConfig.LogLevel)
-	tracing.Init(config.AppConfig.Name)
 	metrics.Init(config.AppConfig.Name)
 
+	err = tracing.Init(config.AppConfig.Name)
+	if err != nil {
+		logger.Fatal("failed to init tracer", zap.Error(err))
+	}
 	defer func() {
 		if err := tracing.Close(); err != nil {
 			logger.Fatal("failed to close tracer", zap.Error(err))
@@ -85,9 +88,12 @@ func main() {
 			connProduct,
 			config.AppConfig.Services.ProductService.Token,
 			config.AppConfig.Services.ProductService.RPS,
+			config.AppConfig.Services.ProductService.CacheSize,
+			config.AppConfig.Services.ProductService.CacheTTL,
 		),
 		pgcartitems.NewCartItemsRepository(pool),
 	)
+	go model.RunBackgroundJobs(context.Background())
 
 	lis, err := net.Listen("tcp", ":"+strconv.Itoa(config.AppConfig.Port.GRPC))
 	if err != nil {

@@ -65,6 +65,9 @@ func (r *Repository) ListOrder(ctx context.Context, orderId int64) (domain.Order
 }
 
 func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/create_order")
+	defer span.Finish()
+
 	query := sq.
 		Insert(TableName).
 		Columns(ColumnUserId, ColumnStatus, ColumnCreatedAt).
@@ -92,6 +95,9 @@ func (r *Repository) CreateOrder(ctx context.Context, userId int64) (int64, erro
 }
 
 func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, status domain.StatusType) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/update_order_status")
+	defer span.Finish()
+
 	query := sq.
 		Update(TableName).
 		Set(ColumnStatus, converter.ConvStatusDomainSchema(status)).
@@ -114,6 +120,9 @@ func (r *Repository) UpdateOrderStatus(ctx context.Context, orderId int64, statu
 }
 
 func (r *Repository) ListOrderOutdated(ctx context.Context) ([]domain.Order, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/list_order_outdated")
+	defer span.Finish()
+
 	query := sq.
 		Select(ColumnOrderId, ColumnUserId, ColumnStatus, ColumnCreatedAt).
 		From(TableName).

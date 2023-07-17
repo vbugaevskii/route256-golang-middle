@@ -13,6 +13,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 )
 
 type Repository struct {
@@ -33,6 +34,9 @@ const (
 )
 
 func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) ([]domain.OrdersReservationsItem, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/list_order_reservations")
+	defer span.Finish()
+
 	query := sq.
 		Select(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -58,6 +62,9 @@ func (r *Repository) ListOrderReservations(ctx context.Context, orderId int64) (
 }
 
 func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64, items []domain.OrdersReservationsItem) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/insert_order_reservations")
+	defer span.Finish()
+
 	query := sq.
 		Insert(TableName).
 		Columns(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount)
@@ -88,6 +95,9 @@ func (r *Repository) InsertOrderReservations(ctx context.Context, orderId int64,
 }
 
 func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]domain.OrdersReservationsItem, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/list_sku_reservations")
+	defer span.Finish()
+
 	query := sq.
 		Select(ColumnOrderId, ColumnWarehouseId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -114,6 +124,9 @@ func (r *Repository) ListSkuReservations(ctx context.Context, sku uint32) ([]dom
 }
 
 func (r *Repository) DeleteOrderReservations(ctx context.Context, orderId int64) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "loms/orders/delete_order_reservations")
+	defer span.Finish()
+
 	query := sq.
 		Delete(TableName).
 		Where(sq.Eq{ColumnOrderId: orderId})

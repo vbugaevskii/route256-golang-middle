@@ -6,6 +6,8 @@ port:
 
 loglevel: "info"
 
+cache_size: 128
+
 kafka:
   brokers:
     - "kafka1:29091"
@@ -17,3 +19,10 @@ kafka:
 telegram:
   token: "TELEGRAM_BOT_TOKEN"
   chat_id: TELEGRAM_CHAT_ID
+
+postgres:
+  host: "notifications-postgres-db"
+  port: 5432
+  user: "postgres"
+  password: "password"
+  database: "notifications"

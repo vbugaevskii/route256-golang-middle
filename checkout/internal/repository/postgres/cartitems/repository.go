@@ -10,6 +10,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 )
 
 type Repository struct {
@@ -38,6 +39,9 @@ type ResponseListCart struct {
 }
 
 func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, count uint16) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "checkout/cartitems/add_to_cart")
+	defer span.Finish()
+
 	query := sq.
 		Insert(TableName).
 		Columns(ColumnUserId, ColumnSKU, ColumnCount).
@@ -64,6 +68,9 @@ func (r *Repository) AddToCart(ctx context.Context, user int64, sku uint32, coun
 }
 
 func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "checkout/cartitems/delete_from_cart")
+	defer span.Finish()
+
 	query := sq.
 		Delete(TableName).
 		Where(sq.Eq{ColumnUserId: user, ColumnSKU: sku})
@@ -85,6 +92,9 @@ func (r *Repository) DeleteFromCart(ctx context.Context, user int64, sku uint32)
 }
 
 func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "checkout/cartitems/list_cart")
+	defer span.Finish()
+
 	query := sq.
 		Select(ColumnUserId, ColumnSKU, ColumnCount).
 		From(TableName).
@@ -113,6 +123,9 @@ func (r *Repository) ListCart(ctx context.Context, user int64) (ResponseListCart
 }
 
 func (r *Repository) DeleteCart(ctx context.Context, user int64) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "checkout/cartitems/delete_cart")
+	defer span.Finish()
+
 	query := sq.
 		Delete(TableName).
 		Where(sq.Eq{ColumnUserId: user})
